@@ -57,7 +57,7 @@ a{color:var(--red);text-decoration:none}
 .nav{display:flex;background:var(--surface);border-bottom:1px solid var(--border)}
 .nav-tab{flex:1;padding:10px 8px;font-size:13px;font-weight:500;color:var(--text3);border-bottom:2px solid transparent;transition:color .15s,border-color .15s;text-align:center}
 .nav-tab.active{color:var(--red);border-color:var(--red)}
-.content{flex:1;overflow-y:auto;padding:16px}
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px}
 /* ── Cards notes ── */
 .notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .note-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;cursor:pointer;transition:box-shadow .15s;position:relative;min-height:80px}
@@ -181,10 +181,10 @@ a{color:var(--red);text-decoration:none}
 .task-context__arrow{opacity:0;transition:opacity .15s,transform .15s}
 .task-context:hover .task-context__arrow{opacity:1;transform:translateX(2px)}
 /* ── Matrices view ── */
-.matrix-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.matrix-quadrant{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px}
+.matrix-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0;width:100%}
+.matrix-quadrant{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;min-width:0;overflow:hidden}
 .matrix-quadrant h3{font-size:12px;font-weight:500;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
-.matrix-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px}
+.matrix-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;min-width:0;overflow:hidden}
 /* ── Vue Date ── */
 .date-subnav{display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:1px}
 .date-subtab{padding:7px 14px;font-size:13px;font-weight:500;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
@@ -255,6 +255,16 @@ a{color:var(--red);text-decoration:none}
 .changelog-items{list-style:none;padding:0;display:flex;flex-direction:column;gap:5px}
 .changelog-items li{font-size:13px;color:var(--text2);display:flex;gap:8px}
 .changelog-items li span:first-child{font-size:14px;flex-shrink:0}
+/* ── Footer ── */
+.app-footer{padding:10px 16px;border-top:1px solid var(--border);background:var(--surface2);display:flex;align-items:flex-start;gap:8px;font-size:11px;color:var(--text3);line-height:1.5;flex-shrink:0}
+.app-footer i{flex-shrink:0;margin-top:1px;color:var(--c-elev-tx)}
+/* ── Aide ── */
+.help-section{margin-bottom:28px}
+.help-section h3{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.help-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:8px}
+.help-block-title{font-size:13px;font-weight:500;color:var(--text1);display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.help-block-desc{font-size:13px;color:var(--text2);line-height:1.6}
+.help-tip{display:flex;align-items:flex-start;gap:8px;background:var(--surface2);border-radius:var(--radius-sm);padding:8px 10px;margin-top:8px;font-size:12px;color:var(--text3)}
 /* ── Données ── */
 .data-section{margin-bottom:24px}
 .data-section h3{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px}
@@ -290,8 +300,13 @@ a{color:var(--red);text-decoration:none}
     <button class="nav-tab" id="tab-matrix" role="tab" aria-selected="false">Matrices</button>
     <button class="nav-tab" id="tab-date" role="tab" aria-selected="false">Date</button>
     <button class="nav-tab" id="tab-data" role="tab" aria-selected="false">Données</button>
+    <button class="nav-tab" id="tab-help" role="tab" aria-selected="false">Aide</button>
   </nav>
   <div class="content" id="content" role="main"></div>
+  <footer class="app-footer" role="contentinfo">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>Les données sont stockées localement dans votre navigateur. Vider le cache supprime toutes les notes — exportez régulièrement une sauvegarde depuis l'onglet Données.</span>
+  </footer>
   <button class="fab" id="fab-add" aria-label="Nouvelle note">
     <i class="bi bi-plus-lg"></i>
   </button>
@@ -355,6 +370,7 @@ const DB_NAME = 'notes-db', DB_VERSION = 2;
 let db, notes = [], tags = [], currentTab = 'notes';
 let editingNoteId = null;
 let notesSearchTerm = '';
+let activeTagFilters = new Set();
 
 // ── Helpers ──────────────────────────────────────────
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
@@ -469,7 +485,23 @@ function critBadge(c) {
 }
 function critClass(c) { return CRIT_CSS[c] || 'none'; }
 
-// ── Rendu onglets ─────────────────────────────────────
+// ── Contraste couleur ─────────────────────────────────
+function hexLuminance(hex) {
+  const r = parseInt(hex.slice(1,3),16)/255;
+  const g = parseInt(hex.slice(3,5),16)/255;
+  const b = parseInt(hex.slice(5,7),16)/255;
+  const toLinear = c => c <= .03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4);
+  return .2126*toLinear(r) + .7152*toLinear(g) + .0722*toLinear(b);
+}
+function contrastRatio(hex1, hex2) {
+  const l1 = hexLuminance(hex1), l2 = hexLuminance(hex2);
+  const bright = Math.max(l1,l2), dark = Math.min(l1,l2);
+  return (bright + .05) / (dark + .05);
+}
+function textColorForBg(hex) {
+  if(!hex || hex === '#FFFFFF') return null; // pas de style inline, utiliser var(--text1)
+  return contrastRatio(hex, '#333333') >= 4.5 ? '#333333' : '#FFFFFF';
+}
 function render() {
   const el = document.getElementById('content'); if(!el) return;
   if(currentTab === 'notes')  renderNotes(el);
@@ -477,16 +509,20 @@ function render() {
   else if(currentTab === 'matrix') renderMatrix(el);
   else if(currentTab === 'date')   renderDate(el);
   else if(currentTab === 'data')   renderData(el);
+  else if(currentTab === 'help')   renderHelp(el);
 }
 
 // ── Vue Notes ─────────────────────────────────────────
 function renderNotes(el) {
   const search = notesSearchTerm.toLowerCase();
   let filtered = notes.filter(n => {
-    if(!search) return true;
-    return (n.title||'').toLowerCase().includes(search) ||
-           (n.content||'').toLowerCase().includes(search) ||
-           (n.checklist||[]).some(i => i.text && i.text.toLowerCase().includes(search));
+    if(search && !(
+      (n.title||'').toLowerCase().includes(search) ||
+      (n.content||'').toLowerCase().includes(search) ||
+      (n.checklist||[]).some(i => i.text && i.text.toLowerCase().includes(search))
+    )) return false;
+    if(activeTagFilters.size && !(n.tags||[]).some(tid => activeTagFilters.has(tid))) return false;
+    return true;
   });
   el.innerHTML = `
     <div style="margin-bottom:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -497,7 +533,15 @@ function renderNotes(el) {
   // Tags filtres
   const tf = document.getElementById('tag-filters');
   if(tf && tags.length) {
-    tf.innerHTML = tags.map(t=>`<button class="tag-toggle" data-tid="${t.id}">${t.name}</button>`).join('');
+    tf.innerHTML = tags.map(t=>`<button class="tag-toggle${activeTagFilters.has(t.id)?' active':''}" data-tid="${t.id}">${t.name}</button>`).join('');
+    tf.querySelectorAll('.tag-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tid = btn.dataset.tid;
+        if(activeTagFilters.has(tid)) activeTagFilters.delete(tid);
+        else activeTagFilters.add(tid);
+        renderNotes(el);
+      });
+    });
   }
   // Grille
   const grid = document.getElementById('notes-grid');
@@ -508,6 +552,9 @@ function renderNotes(el) {
   }
   grid.innerHTML = filtered.map(n => {
     const bgStyle = n.color && n.color !== '#FFFFFF' ? `background:${n.color}` : '';
+    const txColor = textColorForBg(n.color);
+    const txStyle = txColor ? `color:${txColor}` : '';
+    const txStyleMuted = txColor ? `color:${txColor};opacity:.7` : '';
     const preview = n.type === 'task'
       ? (n.checklist||[]).map(i=>i.text).filter(Boolean).slice(0,3).join(' · ') || ''
       : (n.content||'').replace(/<[^>]+>/g,'').slice(0,120);
@@ -515,8 +562,8 @@ function renderNotes(el) {
       const t = tags.find(x=>x.id===tid); return t ? `<span class="tag-chip">${t.name}</span>` : '';
     }).join('');
     return `<div class="note-card" style="${bgStyle}" data-nid="${n.id}" tabindex="0" role="button" aria-label="Ouvrir la note : ${n.title||'Sans titre'}">
-      <div class="note-card__title">${n.title||'Sans titre'}</div>
-      <div class="note-card__preview">${preview||'<em style="color:var(--text3)">Vide</em>'}</div>
+      <div class="note-card__title" style="${txStyle}">${n.title||'Sans titre'}</div>
+      <div class="note-card__preview" style="${txStyleMuted}">${preview||'<em>Vide</em>'}</div>
       ${noteTags ? `<div class="note-card__tags">${noteTags}</div>` : ''}
     </div>`;
   }).join('');
@@ -642,19 +689,45 @@ function taskItemHtml(t) {
 // ── Vue Matrices (P1-1) ───────────────────────────────
 function renderMatrix(el) {
   const allTasks = getAllTasks().filter(t => getStatus(t) !== 'done');
-  el.innerHTML = `<div class="matrix-grid">${Q_ORDER.map(q => {
+  // Filtres quadrants
+  el.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px" role="group" aria-label="Filtrer par quadrant">
+      ${Q_ORDER.map(q => {
+        const qcfg = QUADRANTS[q];
+        const active = matrixFilter.has(q);
+        return `<button class="prio-badge ${q}" data-qfilter="${q}"
+          style="padding:4px 12px;width:auto;height:auto;font-size:12px;font-weight:500;opacity:${active?'1':'.4'};border:2px solid ${active?'currentColor':'transparent'}"
+          aria-pressed="${active}" title="${qcfg.label}">${qcfg.sigil} ${qcfg.label}</button>`;
+      }).join('')}
+    </div>
+    <div class="matrix-grid" id="matrix-quadrants"></div>`;
+
+  // Events filtres
+  el.querySelectorAll('[data-qfilter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const q = btn.dataset.qfilter;
+      if(matrixFilter.has(q)) { if(matrixFilter.size > 1) matrixFilter.delete(q); }
+      else matrixFilter.add(q);
+      renderMatrix(el);
+    });
+  });
+
+  const grid = document.getElementById('matrix-quadrants');
+  if(!grid) return;
+  grid.innerHTML = Q_ORDER.filter(q => matrixFilter.has(q)).map(q => {
     const qcfg = QUADRANTS[q];
     const qTasks = allTasks.filter(t => t.priority === q)
       .sort((a,b) => (CRIT_ORDER[a.criticity||'faible']||3) - (CRIT_ORDER[b.criticity||'faible']||3));
     return `<div class="matrix-quadrant" aria-label="${qcfg.label}">
-      <h3><span class="prio-badge ${q}" style="margin-right:6px">${qcfg.sigil}</span>${qcfg.label}</h3>
+      <h3><span class="prio-badge ${q}" style="margin-right:6px">${qcfg.sigil}</span>${qcfg.label} <span style="font-weight:400;font-size:11px;color:var(--text3)">(${qTasks.length})</span></h3>
       ${qTasks.length ? qTasks.map(t => matrixCardHtml(t)).join('') : '<p style="font-size:12px;color:var(--text3);text-align:center;padding:16px 0">Aucune tâche</p>'}
     </div>`;
-  }).join('')}</div>`;
-  el.querySelectorAll('.task-context[data-nid]').forEach(h => {
+  }).join('');
+
+  grid.querySelectorAll('.task-context[data-nid]').forEach(h => {
     h.addEventListener('click', () => { openNote(h.dataset.nid); });
   });
-  el.querySelectorAll('.task-check').forEach(btn => {
+  grid.querySelectorAll('.task-check').forEach(btn => {
     btn.addEventListener('click', () => toggleTask(btn.dataset.nid, btn.dataset.iid));
   });
 }
@@ -678,6 +751,7 @@ function matrixCardHtml(t) {
 
 // ── Vue Date (P2-1 + P2-2) ────────────────────────────
 let dateSubTab = 'list';
+let matrixFilter = new Set(['q1','q2','q3','q4']); // tous actifs par défaut
 
 function renderDate(el) {
   el.innerHTML = `
@@ -879,6 +953,98 @@ function renderGantt(el) {
     bar.addEventListener('click', () => { if(bar.dataset.ganttNid) openNote(bar.dataset.ganttNid); });
     bar.addEventListener('keydown', e => { if(e.key==='Enter' && bar.dataset.ganttNid) openNote(bar.dataset.ganttNid); });
   });
+}
+
+// ── Vue Aide ──────────────────────────────────────────
+function renderHelp(el) {
+  el.innerHTML = `
+    <div class="help-section">
+      <h3><i class="bi bi-journal-text" style="margin-right:6px"></i>Notes et listes</h3>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-plus-circle" style="color:var(--red)"></i>Créer une note ou une liste</div>
+        <div class="help-block-desc">Appuyez sur le bouton <strong>+</strong> en bas à droite. Choisissez <em>Note texte</em> pour du contenu riche, ou <em>Liste de tâches</em> pour un ensemble d'items à suivre. Attribuez une couleur, des étiquettes, puis enregistrez.</div>
+        <div class="help-tip"><i class="bi bi-lightbulb"></i> Dans l'éditeur texte, tapez <code>----</code> pour insérer un séparateur horizontal.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-tag" style="color:var(--red)"></i>Étiquettes et couleurs</div>
+        <div class="help-block-desc">Les étiquettes permettent de regrouper les notes par thème. Créez-les dans l'onglet <strong>Données</strong>, puis appliquez-les lors de l'édition. Dans l'onglet <strong>Notes</strong>, cliquez sur une étiquette pour filtrer l'affichage.</div>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <h3><i class="bi bi-check2-square" style="margin-right:6px"></i>Gestion des tâches</h3>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-arrow-repeat" style="color:var(--red)"></i>Cycle des statuts</div>
+        <div class="help-block-desc">Chaque case à cocher passe par 4 statuts au clic successif : <strong>Pas commencée → En attente → En cours → Terminée</strong>. Fonctionne dans l'éditeur et dans l'onglet Tâches.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-exclamation-diamond" style="color:var(--red)"></i>Criticité</div>
+        <div class="help-block-desc">Chaque tâche peut recevoir un niveau de criticité : <strong>Critique, Élevée, Moyenne, Faible</strong>. Définissez-le dans l'éditeur de liste via le sélecteur à droite de chaque item. La criticité pilote la météo d'activité et le tri dans toutes les vues.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-calendar-range" style="color:var(--red)"></i>Dates de début et d'échéance</div>
+        <div class="help-block-desc">Chaque tâche accepte une date de début et une date d'échéance, saisies directement dans l'éditeur de liste. Ces dates alimentent l'onglet <strong>Date</strong> (vue chronologique et vue Gantt).</div>
+        <div class="help-tip"><i class="bi bi-lightbulb"></i> Une tâche sans date n'apparaît pas dans la vue Gantt mais reste visible dans la vue liste, dans le groupe <em>Sans date</em>.</div>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <h3><i class="bi bi-grid" style="margin-right:6px"></i>Vue Tâches</h3>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-funnel" style="color:var(--red)"></i>Filtre par criticité</div>
+        <div class="help-block-desc">La colonne de droite permet de filtrer les tâches affichées par niveau de criticité. Décochez les niveaux à masquer. Le compteur dans l'en-tête se met à jour en temps réel.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-cloud-sun" style="color:var(--red)"></i>Météo d'activité</div>
+        <div class="help-block-desc">L'indicateur météo reflète la proportion de tâches critiques parmi les tâches filtrées. <strong>Calme</strong> : aucune critique. <strong>Modéré</strong> : moins de 20 %. <strong>Alerte</strong> : jusqu'à 50 %. <strong>Critique</strong> : au-delà.</div>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <h3><i class="bi bi-diagram-3" style="margin-right:6px"></i>Vue Matrices (Eisenhower)</h3>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-badge-ad" style="color:var(--red)"></i>Assigner une priorité</div>
+        <div class="help-block-desc">Dans l'onglet <strong>Tâches</strong>, le badge à droite de chaque ligne (<strong>!</strong> <strong>P</strong> <strong>D</strong> <strong>✕</strong>) permet de changer le quadrant Eisenhower au clic. La tâche se déplace immédiatement dans la vue Matrices.</div>
+        <div class="help-tip"><i class="bi bi-info-circle"></i> <strong>!</strong> Urgent & important — faire immédiatement. <strong>P</strong> Important, pas urgent — planifier. <strong>D</strong> Urgent, pas important — déléguer. <strong>✕</strong> Ni l'un ni l'autre — éliminer.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-filter" style="color:var(--red)"></i>Filtrer les quadrants</div>
+        <div class="help-block-desc">En haut de la vue Matrices, les 4 badges permettent d'afficher ou masquer chaque quadrant. Le filtre est conservé pendant toute la session.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-box-arrow-up-right" style="color:var(--red)"></i>Naviguer vers la note source</div>
+        <div class="help-block-desc">Chaque carte de la vue Matrices affiche le titre de la note d'origine. Cliquez dessus pour ouvrir directement la note en édition.</div>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <h3><i class="bi bi-calendar3" style="margin-right:6px"></i>Vue Date</h3>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-list-task" style="color:var(--red)"></i>Vue liste chronologique</div>
+        <div class="help-block-desc">Les tâches non terminées sont regroupées par horizon : <strong>En retard, Aujourd'hui, Demain, Cette semaine, Ce mois, Sans date</strong>. Un badge indique le nombre de jours restants.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-bar-chart-steps" style="color:var(--red)"></i>Vue Gantt</div>
+        <div class="help-block-desc">Affiche les tâches ayant au moins une date sous forme de barres chronologiques. La couleur correspond à la criticité. La ligne rouge verticale marque aujourd'hui. Survolez une barre pour afficher le détail, cliquez pour ouvrir la note.</div>
+        <div class="help-tip"><i class="bi bi-lightbulb"></i> Seules les tâches avec une date de début ou d'échéance apparaissent dans le Gantt.</div>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <h3><i class="bi bi-database" style="margin-right:6px"></i>Données et export</h3>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-download" style="color:var(--red)"></i>Export et import JSON</div>
+        <div class="help-block-desc">L'export télécharge un fichier JSON contenant toutes vos notes et étiquettes. L'import remplace intégralement les données existantes — exportez d'abord une sauvegarde avant d'importer.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-file-text" style="color:var(--red)"></i>Rapport Markdown</div>
+        <div class="help-block-desc">Génère un rapport textuel de vos tâches, filtrable par statut. Le résultat est prêt à coller dans Teams, Slack ou Notion.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-block-title"><i class="bi bi-exclamation-triangle" style="color:var(--c-elev-tx)"></i>Attention au cache navigateur</div>
+        <div class="help-block-desc">Les données sont stockées localement dans IndexedDB. Vider le cache du navigateur supprime toutes les notes. Exportez régulièrement une sauvegarde, surtout avant toute opération de maintenance.</div>
+      </div>
+    </div>`;
 }
 
 // ── Vue Données ───────────────────────────────────────
@@ -1417,7 +1583,7 @@ on('btn-update-dismiss','click', () => {
 on('btn-update-save','click', async () => { await exportJSON(); showToast('Sauvegarde effectuée — rechargement…'); setTimeout(()=>location.reload(true),1800); });
 
 // Onglets
-['notes','tasks','matrix','date','data'].forEach(tab => {
+['notes','tasks','matrix','date','data','help'].forEach(tab => {
   on('tab-'+tab,'click', () => {
     currentTab = tab;
     document.querySelectorAll('.nav-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });

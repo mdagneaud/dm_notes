@@ -1,4 +1,4 @@
 {
-  "version": "3.0.0",
-  "summary": "Onglet Date, vue Gantt, filtre criticité, météo d'activité, contexte Matrices"
+  "version": "3.0.1",
+  "summary": "Correctifs filtres, contraste, Matrice et footer avertissement"
 }
