@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="Notes">
 <title>Notes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@300;400;500;600;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
 :root {
@@ -45,7 +45,7 @@ a{color:var(--red);text-decoration:none}
 /* ── Layout ── */
 #app{display:flex;flex-direction:column;height:100%;max-width:960px;margin:0 auto;position:relative}
 .topbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
-.topbar-title{font-size:18px;font-weight:600;color:var(--red);letter-spacing:-.5px}
+.topbar-title{font-size:18px;font-weight:700;color:var(--red);letter-spacing:-.5px}
 .topbar-title span{color:var(--text3)}
 .topbar-sync{font-size:11px;color:var(--text3);margin-left:auto}
 .topbar-sync.saving{color:var(--c-elev-tx)}
@@ -55,14 +55,14 @@ a{color:var(--red);text-decoration:none}
 .topbar-theme{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text3)}
 .topbar-theme:hover{background:var(--surface3)}
 .nav{display:flex;background:var(--surface);border-bottom:1px solid var(--border)}
-.nav-tab{flex:1;padding:10px 8px;font-size:13px;font-weight:500;color:var(--text3);border-bottom:2px solid transparent;transition:color .15s,border-color .15s;text-align:center}
+.nav-tab{flex:1;padding:10px 8px;font-size:13px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent;transition:color .15s,border-color .15s;text-align:center}
 .nav-tab.active{color:var(--red);border-color:var(--red)}
 .content{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px}
 /* ── Cards notes ── */
 .notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .note-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;cursor:pointer;transition:box-shadow .15s;position:relative;min-height:80px}
 .note-card:hover{box-shadow:var(--shadow)}
-.note-card__title{font-size:14px;font-weight:500;color:var(--text1);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.note-card__title{font-size:14px;font-weight:600;color:var(--text1);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .note-card__preview{font-size:12px;color:var(--text3);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .note-card__tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
 .tag-chip{font-size:11px;padding:2px 7px;border-radius:10px;background:var(--surface3);color:var(--text2)}
@@ -75,13 +75,13 @@ a{color:var(--red);text-decoration:none}
 .modal-overlay.open{display:flex}
 .modal{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
 .modal-header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
-.modal-header h2{font-size:15px;font-weight:500;flex:1;color:var(--text1)}
+.modal-header h2{font-size:15px;font-weight:600;flex:1;color:var(--text1)}
 .modal-close{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text3)}
 .modal-close:hover{background:var(--surface3)}
 .modal-body{padding:16px;overflow-y:auto;flex:1}
 .modal-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
 /* ── Boutons ── */
-.btn{padding:8px 16px;border-radius:var(--radius);font-size:14px;font-weight:500;transition:background .15s,color .15s}
+.btn{padding:8px 16px;border-radius:var(--radius);font-size:14px;font-weight:600;transition:background .15s,color .15s}
 .btn-primary{background:var(--red);color:#fff}
 .btn-primary:hover{background:var(--red-dark)}
 .btn-secondary{background:transparent;border:1px solid var(--red);color:var(--red)}
@@ -96,7 +96,7 @@ a{color:var(--red);text-decoration:none}
 .input-field:focus{outline:2px solid var(--red);outline-offset:1px}
 /* ── Vue éditeur ── */
 .editor-wrap{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden}
-.editor-title{width:100%;padding:12px 16px;font-size:16px;font-weight:500;border:none;border-bottom:1px solid var(--border);background:var(--surface);color:var(--text1)}
+.editor-title{width:100%;padding:12px 16px;font-size:16px;font-weight:600;border:none;border-bottom:1px solid var(--border);background:var(--surface);color:var(--text1)}
 .editor-title:focus{outline:none}
 .editor-toolbar{display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .toolbar-btn{padding:4px 8px;border-radius:var(--radius-sm);font-size:13px;color:var(--text2)}
@@ -108,9 +108,9 @@ a{color:var(--red);text-decoration:none}
 .checklist-item:last-child{border-bottom:none}
 .task-check{width:22px;height:22px;border-radius:var(--radius-sm);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:12px;transition:background .15s,border-color .15s}
 .task-check:hover{border-color:var(--red)}
-.task-check.waiting{background:var(--s-wait-bg);border-color:var(--s-wait-tx);color:var(--s-wait-tx)}
-.task-check.doing{background:var(--s-do-bg);border-color:var(--s-do-tx);color:var(--s-do-tx)}
-.task-check.done{background:var(--s-done-bg);border-color:var(--s-done-tx);color:var(--s-done-tx)}
+.task-check.waiting{background:var(--s-wait-bg);border-color:var(--red);color:var(--red)}
+.task-check.doing{background:var(--red-light);border-color:var(--red);color:var(--red)}
+.task-check.done{background:var(--red-light);border-color:var(--red);color:var(--red)}
 .checklist-text{flex:1;font-size:13px;color:var(--text1)}
 .checklist-text.done{text-decoration:line-through;color:var(--text3)}
 .checklist-del{width:24px;height:24px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:var(--text3);opacity:0;transition:opacity .15s}
@@ -122,7 +122,7 @@ a{color:var(--red);text-decoration:none}
 .checklist-add button{padding:6px 12px;border-radius:var(--radius-sm);background:var(--surface3);font-size:13px;color:var(--text2)}
 .checklist-add button:hover{background:var(--border)}
 /* ── Badges criticité / priorité ── */
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;white-space:nowrap}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--radius-sm);font-size:11px;font-weight:600;white-space:nowrap}
 .badge-critique{background:var(--c-crit-bg);color:var(--c-crit-tx)}
 .badge-elevee{background:var(--c-elev-bg);color:var(--c-elev-tx)}
 .badge-moyenne{background:var(--c-moye-bg);color:var(--c-moye-tx)}
@@ -130,9 +130,9 @@ a{color:var(--red);text-decoration:none}
 .badge-none{background:var(--surface3);color:var(--text3)}
 /* Indicateurs priorité Eisenhower */
 .prio-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:var(--radius-sm);font-size:11px;font-weight:700;cursor:pointer;border:2px solid transparent;transition:opacity .15s}
-.prio-badge.q1{background:#B85B52;color:#fff}
-.prio-badge.q2{background:#9D6D2C;color:#fff}
-.prio-badge.q3{background:#5177B1;color:#fff}
+.prio-badge.q1{background:#185FA5;color:#fff}
+.prio-badge.q2{background:#5177B1;color:#fff}
+.prio-badge.q3{background:#99BCE4;color:#333}
 .prio-badge.q4{background:var(--surface3);color:var(--text2);border-color:var(--border2)}
 .prio-badge.none{background:none;border-color:var(--border2);color:var(--text3)}
 /* ── Sélecteur criticité sur item ── */
@@ -146,11 +146,11 @@ a{color:var(--red);text-decoration:none}
 .tasks-main{flex:2;min-width:0}
 .tasks-sidebar{flex:1;min-width:200px;display:flex;flex-direction:column;gap:14px;position:sticky;top:70px}
 .tasks-header-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.tasks-badge-label{font-size:14px;font-weight:500;color:var(--text1)}
+.tasks-badge-label{font-size:14px;font-weight:600;color:var(--text1)}
 .tasks-filter-pill{font-size:11px;background:var(--surface3);color:var(--text3);padding:2px 8px;border-radius:10px}
 /* ── Filtre sidebar ── */
 .sidebar-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
-.sidebar-heading{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:10px}
+.sidebar-heading{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:10px}
 .filter-item{display:flex;align-items:center;gap:8px;margin-bottom:7px;cursor:pointer;transition:opacity .15s}
 .filter-item.off{opacity:.4}
 .filter-item input{accent-color:var(--red);width:15px;height:15px;cursor:pointer;margin:0}
@@ -159,7 +159,7 @@ a{color:var(--red);text-decoration:none}
 .weather-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;border-left:3px solid var(--border2)}
 .weather-indicator{display:flex;align-items:center;gap:8px;margin-bottom:7px}
 .weather-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.weather-label{font-size:14px;font-weight:500}
+.weather-label{font-size:14px;font-weight:600}
 .weather-desc{font-size:13px;color:var(--text1);margin-bottom:4px}
 .weather-detail{font-size:12px;color:var(--text3)}
 .w-calme{border-left-color:#538154}.w-calme .weather-dot,.w-calme .weather-label{color:#538154}.w-calme .weather-dot{background:#538154}
@@ -168,7 +168,7 @@ a{color:var(--red);text-decoration:none}
 .w-critique{border-left-color:#B91818}.w-critique .weather-dot,.w-critique .weather-label{color:#B91818}.w-critique .weather-dot{background:#B91818}
 /* ── Vue Tâches liste ── */
 .task-group{margin-bottom:20px}
-.task-group-header{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px;padding:4px 0;border-bottom:1px solid var(--border)}
+.task-group-header{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px;padding:4px 0;border-bottom:1px solid var(--border)}
 .task-item{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:4px;transition:box-shadow .15s}
 .task-item:hover{box-shadow:var(--shadow)}
 .task-item__title{flex:1;font-size:13px;color:var(--text1);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -177,20 +177,20 @@ a{color:var(--red);text-decoration:none}
 /* ── Contexte note dans Matrices ── */
 .task-context{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);padding-bottom:5px;border-bottom:1px solid var(--border);margin-bottom:6px;cursor:pointer;transition:color .15s}
 .task-context:hover{color:var(--text2)}
-.task-context__tag{font-weight:500;color:var(--text2)}
+.task-context__tag{font-weight:600;color:var(--text2)}
 .task-context__arrow{opacity:0;transition:opacity .15s,transform .15s}
 .task-context:hover .task-context__arrow{opacity:1;transform:translateX(2px)}
 /* ── Matrices view ── */
 .matrix-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0;width:100%}
 .matrix-quadrant{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;min-width:0;overflow:hidden}
-.matrix-quadrant h3{font-size:12px;font-weight:500;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.matrix-quadrant h3{font-size:12px;font-weight:600;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
 .matrix-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;min-width:0;overflow:hidden}
 /* ── Vue Date ── */
 .date-subnav{display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:1px}
-.date-subtab{padding:7px 14px;font-size:13px;font-weight:500;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
+.date-subtab{padding:7px 14px;font-size:13px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
 .date-subtab.active{color:var(--red);border-color:var(--red)}
 .date-group{margin-bottom:24px}
-.date-group-header{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px;padding:6px 0;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
+.date-group-header{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px;padding:6px 0;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
 .date-group-count{font-size:11px;font-weight:400;color:var(--text3)}
 .date-task-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:4px}
 .date-task-item .task-check{width:18px;height:18px;font-size:10px}
@@ -205,7 +205,7 @@ a{color:var(--red);text-decoration:none}
 /* ── Gantt ── */
 .gantt-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface)}
 .gantt-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
-.gantt-header h3{font-size:13px;font-weight:500;color:var(--text2);flex:1}
+.gantt-header h3{font-size:13px;font-weight:600;color:var(--text2);flex:1}
 .gantt-zoom{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3)}
 .gantt-zoom input{width:80px}
 .gantt-container{padding:0 0 8px}
@@ -230,7 +230,7 @@ a{color:var(--red);text-decoration:none}
 .prio-legend-item{display:flex;align-items:center;gap:5px}
 /* ── Rapport ── */
 .report-step{margin-bottom:20px}
-.report-step h3{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px}
+.report-step h3{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px}
 .report-output{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:12px;font-family:monospace;white-space:pre-wrap;max-height:400px;overflow-y:auto;color:var(--text1)}
 /* ── Tags ── */
 .tags-row{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
@@ -246,9 +246,9 @@ a{color:var(--red);text-decoration:none}
 /* ── Changelog ── */
 .changelog-entry{margin-bottom:20px}
 .changelog-entry-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.changelog-version{font-size:14px;font-weight:600;color:var(--text1)}
+.changelog-version{font-size:14px;font-weight:700;color:var(--text1)}
 .changelog-date{font-size:12px;color:var(--text3)}
-.changelog-tag{font-size:11px;padding:2px 7px;border-radius:10px;font-weight:500}
+.changelog-tag{font-size:11px;padding:2px 7px;border-radius:10px;font-weight:600}
 .changelog-tag.major{background:var(--c-crit-bg);color:var(--c-crit-tx)}
 .changelog-tag.minor{background:var(--c-elev-bg);color:var(--c-elev-tx)}
 .changelog-tag.patch{background:var(--surface3);color:var(--text3)}
@@ -257,7 +257,7 @@ a{color:var(--red);text-decoration:none}
 .changelog-items li span:first-child{font-size:14px;flex-shrink:0}
 /* ── Bandeau filtres global ── */
 .filter-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap;min-height:44px}
-.filter-bar-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);white-space:nowrap;margin-right:4px}
+.filter-bar-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);white-space:nowrap;margin-right:4px}
 .filter-pill{padding:3px 10px;border-radius:10px;font-size:12px;border:1px solid var(--border);color:var(--text2);background:var(--surface);transition:background .12s,color .12s,border-color .12s;white-space:nowrap}
 .filter-pill.active{background:var(--red);color:#fff;border-color:var(--red)}
 .filter-pill-date{padding:3px 8px;border-radius:10px;font-size:12px;border:1px solid var(--border);color:var(--text2);background:var(--surface)}
@@ -280,14 +280,14 @@ a{color:var(--red);text-decoration:none}
 .footer-btn:hover{border-color:var(--border2);color:var(--text1)}
 /* ── Aide ── */
 .help-section{margin-bottom:28px}
-.help-section h3{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.help-section h3{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 .help-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:8px}
-.help-block-title{font-size:13px;font-weight:500;color:var(--text1);display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.help-block-title{font-size:13px;font-weight:600;color:var(--text1);display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .help-block-desc{font-size:13px;color:var(--text2);line-height:1.6}
 .help-tip{display:flex;align-items:flex-start;gap:8px;background:var(--surface2);border-radius:var(--radius-sm);padding:8px 10px;margin-top:8px;font-size:12px;color:var(--text3)}
 /* ── Données ── */
 .data-section{margin-bottom:24px}
-.data-section h3{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px}
+.data-section h3{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px}
 /* ── Toast ── */
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text1);color:var(--surface);padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .25s,transform .25s;z-index:600;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -308,7 +308,7 @@ a{color:var(--red);text-decoration:none}
 <div id="app">
   <div class="topbar">
     <div class="topbar-title">notes<span>.</span></div>
-    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.1.0</button>
+    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.1.1</button>
     <span class="topbar-sync" id="sync-status" aria-live="polite"></span>
     <button class="topbar-theme" id="btn-theme" aria-label="Basculer thème" title="Thème clair/sombre">
       <i class="bi bi-moon-fill" id="theme-icon"></i>
@@ -406,7 +406,7 @@ a{color:var(--red);text-decoration:none}
 
 <script>
 'use strict';
-const APP_VERSION = '3.1.0';
+const APP_VERSION = '3.1.1';
 const DB_NAME = 'notes-db', DB_VERSION = 2;
 let db, notes = [], tags = [], currentTab = 'notes';
 let editingNoteId = null;
@@ -531,7 +531,7 @@ function renderFilterBar() {
   const bar = document.getElementById('global-filter-bar');
   if(!bar) return;
   const tab = currentTab;
-  const showTags = ['notes','tasks','matrix','data'].includes(tab);
+  const showTags = ['tasks','matrix','date'].includes(tab);
   const showCrit = ['tasks','matrix','date'].includes(tab);
   const showDate = tab === 'date';
 
@@ -831,15 +831,25 @@ function openPurge() {
           return `<div class="purge-item">
             <input type="checkbox" checked data-nid="${n.id}" class="purge-cb" aria-label="Sélectionner ${n.title||'Sans titre'}">
             <div style="flex:1;min-width:0">
-              <div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n.title||'Sans titre'}</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${n.title||'Sans titre'}</span>
+                <button class="purge-open-btn" data-nid="${n.id}" title="Voir la note" aria-label="Voir la note ${n.title||'Sans titre'}" style="color:var(--red);font-size:12px;white-space:nowrap;flex-shrink:0;padding:1px 6px;border-radius:var(--radius-sm);border:1px solid var(--border)"><i class="bi bi-box-arrow-up-right"></i> Voir</button>
+              </div>
               ${noteTags ? `<div style="font-size:11px;color:var(--text3)">${noteTags}</div>` : ''}
             </div>
-            <span style="font-size:11px;color:var(--text3);white-space:nowrap">${(n.checklist||[]).filter(i=>!i.separator).length} tâche${(n.checklist||[]).filter(i=>!i.separator).length>1?'s':''}</span>
+            <span style="font-size:11px;color:var(--text3);white-space:nowrap;margin-left:8px">${(n.checklist||[]).filter(i=>!i.separator).length} tâche${(n.checklist||[]).filter(i=>!i.separator).length>1?'s':''}</span>
           </div>`;
         }).join('')}
       </div>`;
   }
   modal.classList.add('open');
+
+  modal.querySelectorAll('.purge-open-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      modal.classList.remove('open');
+      openNote(btn.dataset.nid);
+    });
+  });
 
   on('purge-confirm','click', async () => {
     const toDelete = [...modal.querySelectorAll('.purge-cb:checked')].map(cb => cb.dataset.nid);
@@ -864,18 +874,18 @@ function renderMatrix(el) {
 
   el.innerHTML = `
     <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px" role="group" aria-label="Filtres Matrices">
-      <span style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">Quadrants</span>
+      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">Quadrants</span>
       ${Q_ORDER.map(q => {
         const qcfg = QUADRANTS[q], active = matrixFilter.has(q);
         return `<button class="prio-badge ${q}" data-qfilter="${q}"
-          style="padding:4px 12px;width:auto;height:auto;font-size:12px;font-weight:500;opacity:${active?'1':'.4'};border:2px solid ${active?'currentColor':'transparent'}"
+          style="padding:4px 12px;width:auto;height:auto;font-size:12px;font-weight:600;opacity:${active?'1':'.4'};border:2px solid ${active?'currentColor':'transparent'}"
           aria-pressed="${active}">${qcfg.sigil} ${qcfg.label}</button>`;
       }).join('')}
       ${tags.length ? `<span class="filter-bar-sep"></span>
-      <span style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">Étiquettes</span>
+      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">Étiquettes</span>
       ${tags.map(t=>`<button class="filter-pill${matrixExtraFilters.tags.has(t.id)?' active':''}" data-mftag="${t.id}">${t.name}</button>`).join('')}` : ''}
       <span class="filter-bar-sep"></span>
-      <span style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">Criticité</span>
+      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">Criticité</span>
       ${['critique','elevee','moyenne','faible'].map(c=>
         `<button class="filter-pill${matrixExtraFilters.crits.has(c)?' active':''}" data-mfcrit="${c}">${CRIT_LABELS[c]}</button>`
       ).join('')}
@@ -971,7 +981,7 @@ function renderDate(el) {
 }
 
 function renderDateList(el) {
-  const allTasks = getAllTasks().filter(t => getStatus(t) !== 'done');
+  const allTasks = getAllTasks().filter(t => getStatus(t) !== 'done' && taskMatchesGlobalFilters(t));
   const todayStr = today();
   const now = new Date(); now.setHours(0,0,0,0);
   const tomorrow = new Date(now); tomorrow.setDate(now.getDate()+1);
@@ -1051,7 +1061,7 @@ function dateTaskHtml(t) {
 let ganttZoom = 1; // 1=mois, 2=semaine, 0.5=trimestre
 
 function renderGantt(el) {
-  const allTasks = getAllTasks().filter(t => t.start_date || t.due_date);
+  const allTasks = getAllTasks().filter(t => (t.start_date || t.due_date) && taskMatchesGlobalFilters(t));
   if(!allTasks.length) {
     el.innerHTML = `<div class="empty-state"><i class="bi bi-bar-chart-steps" style="font-size:32px"></i><p>Aucune tâche avec des dates de début ou d'échéance</p></div>`;
     return;
@@ -1272,13 +1282,13 @@ function renderData(el) {
         ${[['Notes',totalNotes,'bi-journal'],['Tâches',totalTasks,'bi-check2-square'],['Terminées',doneTasks,'bi-check2-all'],['Étiquettes',tags.length,'bi-tag']].map(([l,v,ic])=>`
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center">
             <i class="bi ${ic}" style="font-size:18px;color:var(--text3)"></i>
-            <div style="font-size:22px;font-weight:600;color:var(--text1);margin-top:4px">${v}</div>
+            <div style="font-size:22px;font-weight:700;color:var(--text1);margin-top:4px">${v}</div>
             <div style="font-size:11px;color:var(--text3)">${l}</div>
           </div>`).join('')}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
-          <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:8px">Tâches par criticité</div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:8px">Tâches par criticité</div>
           ${byCrit.map(({c,label,count})=>`
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
               <span class="badge badge-${c}" style="min-width:60px;justify-content:center">${label}</span>
@@ -1289,7 +1299,7 @@ function renderData(el) {
             </div>`).join('')}
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
-          <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:8px">Notes par étiquette</div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:8px">Notes par étiquette</div>
           ${byTag.length ? byTag.map(({t,count})=>`
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
               <span class="tag-chip" style="min-width:60px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</span>
@@ -1373,11 +1383,11 @@ function openNote(nid) {
     </div>
     <div id="editor-area"></div>
     <div style="margin:12px 0">
-      <div style="font-size:12px;font-weight:500;color:var(--text3);margin-bottom:6px">Couleur</div>
+      <div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:6px">Couleur</div>
       <div class="color-swatches">${colorSwatches}</div>
     </div>
     ${tags.length ? `<div style="margin-bottom:4px">
-      <div style="font-size:12px;font-weight:500;color:var(--text3);margin-bottom:6px">Étiquettes</div>
+      <div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:6px">Étiquettes</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">${tagOptions}</div>
     </div>` : ''}`;
 
@@ -1925,7 +1935,15 @@ function applyTheme() {
 
 // ── Changelog ─────────────────────────────────────────
 const CHANGELOG = [
-  { version:'3.1.0', date:'2026-04-15', tag:'minor', entries:[
+  { version:'3.1.1', date:'2026-04-15', tag:'patch', entries:[
+    { icon:'✨', text:'Modale "À supprimer ?" — bouton Voir sur chaque note pour vérifier le contenu avant suppression.' },
+    { icon:'🎨', text:'Onglet Notes — étiquettes retirées du bandeau de filtres global (redondant avec les filtres sous la recherche).' },
+    { icon:'🎨', text:'Onglet Données — étiquettes retirées du bandeau de filtres global.' },
+    { icon:'🎨', text:'Onglet Tâches — couleurs des quadrants Eisenhower en dégradé de bleus (Q1 le plus foncé).' },
+    { icon:'🎨', text:'Icônes de statut (en attente, en cours, terminé) — couleur unifiée rouge #E30613.' },
+    { icon:'🎨', text:'Typographie — graisse de tous les textes augmentée d\'un niveau (500→600, 600→700).' },
+    { icon:'✨', text:'Onglet Dates — filtre par étiquettes désormais fonctionnel (liste et Gantt).' },
+  ]},
     { icon:'✨', text:'Sélection multiple dans l\'éditeur de liste — cases à cocher, barre bulk-action pour appliquer criticité et dates en lot.' },
     { icon:'✨', text:'Bandeau de filtres persistant (étiquettes, criticité, dates) affiché sous la nav sur tous les onglets concernés.' },
     { icon:'✨', text:'Rapport Markdown enrichi — filtre par période, étiquettes et criticité (ex. bloquants RGAA cette semaine).' },
