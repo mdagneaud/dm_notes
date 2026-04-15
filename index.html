@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#E30613">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Notes">
+<title>Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+:root {
+  --red:#E30613;--red-dark:#B91818;--red-light:#FCE1D7;
+  --bg:#F0F0F0;--surface:#FFFFFF;--surface2:#F8F8F8;--surface3:#ECECEC;
+  --text1:#333333;--text2:#4C4C4B;--text3:#828485;
+  --border:#E0E0E0;--border2:#CCCCCC;
+  --radius:4px;--radius-sm:3px;--radius-lg:8px;
+  --shadow:0 1px 4px rgba(0,0,0,.08);
+  /* criticité */
+  --c-crit-bg:#FCE1D7;--c-crit-tx:#B91818;
+  --c-elev-bg:#FFF2CD;--c-elev-tx:#9D6D2C;
+  --c-moye-bg:#E7F1E2;--c-moye-tx:#538154;
+  --c-faib-bg:#ECECEC;--c-faib-tx:#4C4C4B;
+  /* statuts */
+  --s-wait-bg:#FFF2CD;--s-wait-tx:#9D6D2C;
+  --s-do-bg:#E4F3FD;--s-do-tx:#185FA5;
+  --s-done-bg:#E7F1E2;--s-done-tx:#538154;
+  /* Gantt */
+  --gantt-crit:#E30613;--gantt-elev:#9D6D2C;--gantt-moye:#538154;--gantt-faib:#828485;
+}
+[data-theme=dark]{
+  --bg:#1A1A1A;--surface:#242424;--surface2:#2E2E2E;--surface3:#383838;
+  --text1:#F0F0F0;--text2:#C8C8C8;--text3:#828485;
+  --border:#3A3A3A;--border2:#4A4A4A;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:'Anek Latin',Arial,sans-serif;font-size:15px;color:var(--text1);background:var(--bg)}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;font-size:14px}
+a{color:var(--red);text-decoration:none}
+/* ── Layout ── */
+#app{display:flex;flex-direction:column;height:100%;max-width:960px;margin:0 auto;position:relative}
+.topbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.topbar-title{font-size:18px;font-weight:600;color:var(--red);letter-spacing:-.5px}
+.topbar-title span{color:var(--text3)}
+.topbar-sync{font-size:11px;color:var(--text3);margin-left:auto}
+.topbar-sync.saving{color:var(--c-elev-tx)}
+.topbar-sync.saved{color:var(--c-moye-tx)}
+.version-badge{font-size:11px;padding:2px 7px;border-radius:10px;border:1px solid var(--border);color:var(--text3);cursor:pointer}
+.version-badge:hover{border-color:var(--border2);color:var(--text2)}
+.topbar-theme{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text3)}
+.topbar-theme:hover{background:var(--surface3)}
+.nav{display:flex;background:var(--surface);border-bottom:1px solid var(--border)}
+.nav-tab{flex:1;padding:10px 8px;font-size:13px;font-weight:500;color:var(--text3);border-bottom:2px solid transparent;transition:color .15s,border-color .15s;text-align:center}
+.nav-tab.active{color:var(--red);border-color:var(--red)}
+.content{flex:1;overflow-y:auto;padding:16px}
+/* ── Cards notes ── */
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.note-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;cursor:pointer;transition:box-shadow .15s;position:relative;min-height:80px}
+.note-card:hover{box-shadow:var(--shadow)}
+.note-card__title{font-size:14px;font-weight:500;color:var(--text1);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.note-card__preview{font-size:12px;color:var(--text3);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.note-card__tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.tag-chip{font-size:11px;padding:2px 7px;border-radius:10px;background:var(--surface3);color:var(--text2)}
+/* ── FAB ── */
+.fab{position:fixed;bottom:80px;right:20px;width:52px;height:52px;border-radius:50%;background:var(--red);color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(227,6,19,.35);transition:background .15s,transform .1s;z-index:200}
+.fab:hover{background:var(--red-dark)}
+.fab:active{transform:scale(.96)}
+/* ── Modals ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.modal-header h2{font-size:15px;font-weight:500;flex:1;color:var(--text1)}
+.modal-close{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text3)}
+.modal-close:hover{background:var(--surface3)}
+.modal-body{padding:16px;overflow-y:auto;flex:1}
+.modal-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+/* ── Boutons ── */
+.btn{padding:8px 16px;border-radius:var(--radius);font-size:14px;font-weight:500;transition:background .15s,color .15s}
+.btn-primary{background:var(--red);color:#fff}
+.btn-primary:hover{background:var(--red-dark)}
+.btn-secondary{background:transparent;border:1px solid var(--red);color:var(--red)}
+.btn-secondary:hover{background:var(--red-light)}
+.btn-ghost{color:var(--red)}
+.btn-ghost:hover{background:var(--red-light)}
+.btn-danger{color:#B91818}
+.btn-danger:hover{background:var(--red-light)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+/* ── Inputs ── */
+.input-field{width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text1);font-size:14px}
+.input-field:focus{outline:2px solid var(--red);outline-offset:1px}
+/* ── Vue éditeur ── */
+.editor-wrap{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden}
+.editor-title{width:100%;padding:12px 16px;font-size:16px;font-weight:500;border:none;border-bottom:1px solid var(--border);background:var(--surface);color:var(--text1)}
+.editor-title:focus{outline:none}
+.editor-toolbar{display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.toolbar-btn{padding:4px 8px;border-radius:var(--radius-sm);font-size:13px;color:var(--text2)}
+.toolbar-btn:hover{background:var(--surface3)}
+.editor-content{min-height:160px;padding:12px 16px;font-size:14px;line-height:1.6;color:var(--text1);outline:none}
+.editor-content[contenteditable]:empty::before{content:attr(data-placeholder);color:var(--text3)}
+/* ── Checklist ── */
+.checklist-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
+.checklist-item:last-child{border-bottom:none}
+.task-check{width:22px;height:22px;border-radius:var(--radius-sm);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:12px;transition:background .15s,border-color .15s}
+.task-check:hover{border-color:var(--red)}
+.task-check.waiting{background:var(--s-wait-bg);border-color:var(--s-wait-tx);color:var(--s-wait-tx)}
+.task-check.doing{background:var(--s-do-bg);border-color:var(--s-do-tx);color:var(--s-do-tx)}
+.task-check.done{background:var(--s-done-bg);border-color:var(--s-done-tx);color:var(--s-done-tx)}
+.checklist-text{flex:1;font-size:13px;color:var(--text1)}
+.checklist-text.done{text-decoration:line-through;color:var(--text3)}
+.checklist-del{width:24px;height:24px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:var(--text3);opacity:0;transition:opacity .15s}
+.checklist-item:hover .checklist-del{opacity:1}
+.checklist-del:hover{background:var(--red-light);color:var(--red-dark)}
+.checklist-add{display:flex;gap:8px;padding:8px 0 0;align-items:center}
+.checklist-add input{flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text1);font-size:13px}
+.checklist-add input:focus{outline:2px solid var(--red);outline-offset:1px}
+.checklist-add button{padding:6px 12px;border-radius:var(--radius-sm);background:var(--surface3);font-size:13px;color:var(--text2)}
+.checklist-add button:hover{background:var(--border)}
+/* ── Badges criticité / priorité ── */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;white-space:nowrap}
+.badge-critique{background:var(--c-crit-bg);color:var(--c-crit-tx)}
+.badge-elevee{background:var(--c-elev-bg);color:var(--c-elev-tx)}
+.badge-moyenne{background:var(--c-moye-bg);color:var(--c-moye-tx)}
+.badge-faible{background:var(--c-faib-bg);color:var(--c-faib-tx)}
+.badge-none{background:var(--surface3);color:var(--text3)}
+/* Indicateurs priorité Eisenhower */
+.prio-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:var(--radius-sm);font-size:11px;font-weight:700;cursor:pointer;border:2px solid transparent;transition:opacity .15s}
+.prio-badge.q1{background:#B85B52;color:#fff}
+.prio-badge.q2{background:#9D6D2C;color:#fff}
+.prio-badge.q3{background:#5177B1;color:#fff}
+.prio-badge.q4{background:var(--surface3);color:var(--text2);border-color:var(--border2)}
+.prio-badge.none{background:none;border-color:var(--border2);color:var(--text3)}
+/* ── Sélecteur criticité sur item ── */
+.crit-select{font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text2);cursor:pointer}
+.crit-select:focus{outline:2px solid var(--red);outline-offset:1px}
+/* ── Date inputs ── */
+.date-input{font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text2)}
+.date-input:focus{outline:2px solid var(--red);outline-offset:1px}
+/* ── Vue Tâches layout 2 colonnes ── */
+.tasks-layout{display:flex;gap:20px;align-items:flex-start}
+.tasks-main{flex:2;min-width:0}
+.tasks-sidebar{flex:1;min-width:200px;display:flex;flex-direction:column;gap:14px;position:sticky;top:70px}
+.tasks-header-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.tasks-badge-label{font-size:14px;font-weight:500;color:var(--text1)}
+.tasks-filter-pill{font-size:11px;background:var(--surface3);color:var(--text3);padding:2px 8px;border-radius:10px}
+/* ── Filtre sidebar ── */
+.sidebar-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.sidebar-heading{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:10px}
+.filter-item{display:flex;align-items:center;gap:8px;margin-bottom:7px;cursor:pointer;transition:opacity .15s}
+.filter-item.off{opacity:.4}
+.filter-item input{accent-color:var(--red);width:15px;height:15px;cursor:pointer;margin:0}
+.filter-count{margin-left:auto;font-size:12px;color:var(--text3);font-variant-numeric:tabular-nums}
+/* ── Météo d'activité ── */
+.weather-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;border-left:3px solid var(--border2)}
+.weather-indicator{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.weather-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.weather-label{font-size:14px;font-weight:500}
+.weather-desc{font-size:13px;color:var(--text1);margin-bottom:4px}
+.weather-detail{font-size:12px;color:var(--text3)}
+.w-calme{border-left-color:#538154}.w-calme .weather-dot,.w-calme .weather-label{color:#538154}.w-calme .weather-dot{background:#538154}
+.w-modere{border-left-color:#9D6D2C}.w-modere .weather-dot,.w-modere .weather-label{color:#9D6D2C}.w-modere .weather-dot{background:#9D6D2C}
+.w-alerte{border-left-color:#B85B52}.w-alerte .weather-dot,.w-alerte .weather-label{color:#B85B52}.w-alerte .weather-dot{background:#B85B52}
+.w-critique{border-left-color:#B91818}.w-critique .weather-dot,.w-critique .weather-label{color:#B91818}.w-critique .weather-dot{background:#B91818}
+/* ── Vue Tâches liste ── */
+.task-group{margin-bottom:20px}
+.task-group-header{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px;padding:4px 0;border-bottom:1px solid var(--border)}
+.task-item{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:4px;transition:box-shadow .15s}
+.task-item:hover{box-shadow:var(--shadow)}
+.task-item__title{flex:1;font-size:13px;color:var(--text1);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.task-item__title.done{text-decoration:line-through;color:var(--text3)}
+.task-item__meta{font-size:11px;color:var(--text3);white-space:nowrap}
+/* ── Contexte note dans Matrices ── */
+.task-context{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);padding-bottom:5px;border-bottom:1px solid var(--border);margin-bottom:6px;cursor:pointer;transition:color .15s}
+.task-context:hover{color:var(--text2)}
+.task-context__tag{font-weight:500;color:var(--text2)}
+.task-context__arrow{opacity:0;transition:opacity .15s,transform .15s}
+.task-context:hover .task-context__arrow{opacity:1;transform:translateX(2px)}
+/* ── Matrices view ── */
+.matrix-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.matrix-quadrant{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px}
+.matrix-quadrant h3{font-size:12px;font-weight:500;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.matrix-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px}
+/* ── Vue Date ── */
+.date-subnav{display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:1px}
+.date-subtab{padding:7px 14px;font-size:13px;font-weight:500;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
+.date-subtab.active{color:var(--red);border-color:var(--red)}
+.date-group{margin-bottom:24px}
+.date-group-header{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px;padding:6px 0;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
+.date-group-count{font-size:11px;font-weight:400;color:var(--text3)}
+.date-task-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:4px}
+.date-task-item .task-check{width:18px;height:18px;font-size:10px}
+.date-task-item__body{flex:1;min-width:0}
+.date-task-item__title{font-size:13px;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.date-task-item__sub{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px;margin-top:2px}
+.days-left{font-size:11px;padding:1px 6px;border-radius:10px}
+.days-left.urgent{background:var(--c-crit-bg);color:var(--c-crit-tx)}
+.days-left.soon{background:var(--c-elev-bg);color:var(--c-elev-tx)}
+.days-left.ok{background:var(--c-moye-bg);color:var(--c-moye-tx)}
+.days-left.no-date{background:var(--surface3);color:var(--text3)}
+/* ── Gantt ── */
+.gantt-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface)}
+.gantt-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.gantt-header h3{font-size:13px;font-weight:500;color:var(--text2);flex:1}
+.gantt-zoom{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3)}
+.gantt-zoom input{width:80px}
+.gantt-container{padding:0 0 8px}
+.gantt-axis{display:flex;margin-left:180px;padding:8px 0 4px;min-width:600px}
+.gantt-axis-label{font-size:10px;color:var(--text3);text-align:center;flex-shrink:0}
+.gantt-row{display:flex;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);min-width:600px}
+.gantt-row:last-child{border-bottom:none}
+.gantt-row-label{width:180px;flex-shrink:0;padding:0 12px;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gantt-row-track{flex:1;position:relative;height:28px}
+.gantt-bar{position:absolute;height:20px;top:4px;border-radius:3px;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;overflow:hidden;min-width:4px}
+.gantt-bar:hover{opacity:.85}
+.gantt-bar span{font-size:10px;color:#fff;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none}
+.gantt-bar.crit{background:var(--gantt-crit)}
+.gantt-bar.elev{background:var(--gantt-elev)}
+.gantt-bar.moye{background:var(--gantt-moye)}
+.gantt-bar.faib{background:var(--gantt-faib)}
+.gantt-today-line{position:absolute;top:0;bottom:0;width:2px;background:var(--red);opacity:.5;pointer-events:none}
+/* Tooltip Gantt */
+.gantt-tooltip{position:fixed;background:var(--text1);color:var(--surface);font-size:12px;padding:6px 10px;border-radius:var(--radius-sm);pointer-events:none;z-index:500;display:none;max-width:240px;line-height:1.4}
+/* ── Légende Eisenhower ── */
+.prio-legend{display:flex;flex-wrap:wrap;gap:6px 14px;padding:8px 12px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border);font-size:12px;color:var(--text3);margin-bottom:14px}
+.prio-legend-item{display:flex;align-items:center;gap:5px}
+/* ── Rapport ── */
+.report-step{margin-bottom:20px}
+.report-step h3{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px}
+.report-output{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:12px;font-family:monospace;white-space:pre-wrap;max-height:400px;overflow-y:auto;color:var(--text1)}
+/* ── Tags ── */
+.tags-row{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.tag-toggle{padding:4px 10px;border-radius:10px;font-size:12px;border:1px solid var(--border);color:var(--text2);transition:background .15s,color .15s}
+.tag-toggle.active{background:var(--red);color:#fff;border-color:var(--red)}
+/* ── Couleurs note ── */
+.color-swatches{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.color-swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s}
+.color-swatch.selected{border-color:var(--text2);transform:scale(1.15)}
+/* ── Bannière MAJ ── */
+.update-banner{position:fixed;top:0;left:0;right:0;background:#538154;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;font-size:13px;z-index:1000;transform:translateY(-100%);transition:transform .3s}
+.update-banner.visible{transform:translateY(0)}
+/* ── Changelog ── */
+.changelog-entry{margin-bottom:20px}
+.changelog-entry-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.changelog-version{font-size:14px;font-weight:600;color:var(--text1)}
+.changelog-date{font-size:12px;color:var(--text3)}
+.changelog-tag{font-size:11px;padding:2px 7px;border-radius:10px;font-weight:500}
+.changelog-tag.major{background:var(--c-crit-bg);color:var(--c-crit-tx)}
+.changelog-tag.minor{background:var(--c-elev-bg);color:var(--c-elev-tx)}
+.changelog-tag.patch{background:var(--surface3);color:var(--text3)}
+.changelog-items{list-style:none;padding:0;display:flex;flex-direction:column;gap:5px}
+.changelog-items li{font-size:13px;color:var(--text2);display:flex;gap:8px}
+.changelog-items li span:first-child{font-size:14px;flex-shrink:0}
+/* ── Données ── */
+.data-section{margin-bottom:24px}
+.data-section h3{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px}
+/* ── Toast ── */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text1);color:var(--surface);padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .25s,transform .25s;z-index:600;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ── Empty state ── */
+.empty-state{text-align:center;padding:48px 24px;color:var(--text3)}
+.empty-state p{font-size:14px;margin-top:8px}
+/* ── Responsive ── */
+@media(max-width:600px){
+  .matrix-grid{grid-template-columns:1fr}
+  .tasks-layout{flex-direction:column}
+  .tasks-sidebar{position:static;min-width:0;width:100%;flex-direction:row;flex-wrap:wrap}
+  .tasks-sidebar>*{flex:1;min-width:160px}
+  .notes-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-title">notes<span>.</span></div>
+    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.0.0</button>
+    <span class="topbar-sync" id="sync-status" aria-live="polite"></span>
+    <button class="topbar-theme" id="btn-theme" aria-label="Basculer thème" title="Thème clair/sombre">
+      <i class="bi bi-moon-fill" id="theme-icon"></i>
+    </button>
+  </div>
+  <nav class="nav" role="tablist" aria-label="Onglets principaux">
+    <button class="nav-tab active" id="tab-notes" role="tab" aria-selected="true">Notes</button>
+    <button class="nav-tab" id="tab-tasks" role="tab" aria-selected="false">Tâches</button>
+    <button class="nav-tab" id="tab-matrix" role="tab" aria-selected="false">Matrices</button>
+    <button class="nav-tab" id="tab-date" role="tab" aria-selected="false">Date</button>
+    <button class="nav-tab" id="tab-data" role="tab" aria-selected="false">Données</button>
+  </nav>
+  <div class="content" id="content" role="main"></div>
+  <button class="fab" id="fab-add" aria-label="Nouvelle note">
+    <i class="bi bi-plus-lg"></i>
+  </button>
+</div>
+
+<!-- Bannière MAJ -->
+<div class="update-banner" id="update-banner" role="alert" aria-live="assertive">
+  <span id="update-msg">Nouvelle version disponible</span>
+  <button class="btn btn-secondary" id="btn-update-dismiss" style="margin-left:auto;border-color:rgba(255,255,255,.6);color:#fff;font-size:12px;padding:4px 10px">Plus tard</button>
+  <button class="btn btn-primary" id="btn-update-save" style="background:rgba(255,255,255,.2);font-size:12px;padding:4px 10px">Mettre à jour</button>
+</div>
+
+<!-- Tooltip Gantt -->
+<div class="gantt-tooltip" id="gantt-tooltip"></div>
+
+<!-- Toast -->
+<div class="toast" id="toast" aria-live="polite" role="status"></div>
+
+<!-- Modal éditeur note -->
+<div class="modal-overlay" id="modal-note" role="dialog" aria-modal="true" aria-labelledby="modal-note-title">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <h2 id="modal-note-title">Note</h2>
+      <button class="modal-close" id="note-close" aria-label="Fermer"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body" id="modal-note-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-ghost" id="note-delete">Supprimer</button>
+      <button class="btn btn-secondary" id="note-cancel">Annuler</button>
+      <button class="btn btn-primary" id="note-save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal changelog -->
+<div class="modal-overlay" id="modal-changelog" role="dialog" aria-modal="true" aria-labelledby="modal-changelog-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-changelog-title">Changelog</h2>
+      <button class="modal-close" id="changelog-close" aria-label="Fermer"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body" id="modal-changelog-body"></div>
+  </div>
+</div>
+
+<!-- Modal rapport -->
+<div class="modal-overlay" id="modal-report" role="dialog" aria-modal="true" aria-labelledby="modal-report-title">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <h2 id="modal-report-title">Rapport</h2>
+      <button class="modal-close" id="report-close" aria-label="Fermer"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body" id="modal-report-body"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const APP_VERSION = '3.0.0';
+const DB_NAME = 'notes-db', DB_VERSION = 2;
+let db, notes = [], tags = [], currentTab = 'notes';
+let editingNoteId = null;
+let notesSearchTerm = '';
+
+// ── Helpers ──────────────────────────────────────────
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function today() { return new Date().toISOString().slice(0,10); }
+function parseDate(s) { if(!s) return null; const d = new Date(s+'T00:00:00'); return isNaN(d) ? null : d; }
+function formatDate(s) {
+  const d = parseDate(s); if(!d) return '';
+  return d.toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
+}
+function daysFrom(s) {
+  const d = parseDate(s); if(!d) return null;
+  const t = new Date(); t.setHours(0,0,0,0);
+  return Math.round((d - t) / 86400000);
+}
+function showToast(msg, dur=2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+function setSyncStatus(state) {
+  const el = document.getElementById('sync-status');
+  if(!el) return;
+  if(state === 'saving') { el.textContent = 'Enregistrement…'; el.className = 'topbar-sync saving'; }
+  else if(state === 'saved') { el.textContent = 'Enregistré'; el.className = 'topbar-sync saved'; }
+  else { el.textContent = ''; el.className = 'topbar-sync'; }
+}
+let saveTimer;
+function scheduleAutoExport() {
+  setSyncStatus('saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { backupToLocalStorage(); setSyncStatus('saved'); }, 800);
+}
+function backupToLocalStorage() {
+  try { localStorage.setItem('notes-backup', JSON.stringify({notes, tags, ts: Date.now()})); } catch(e) {}
+}
+function on(id, evt, fn) { const el = document.getElementById(id); if(el) el.addEventListener(evt, fn); }
+
+// ── IndexedDB ─────────────────────────────────────────
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if(!d.objectStoreNames.contains('notes')) d.createObjectStore('notes', {keyPath:'id'});
+      if(!d.objectStoreNames.contains('tags')) d.createObjectStore('tags', {keyPath:'id'});
+    };
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = e => rej(e.target.error);
+  });
+}
+function dbGetAll(store) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = e => rej(e.target.error);
+  });
+}
+function dbPut(store, obj) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).put(obj);
+    req.onsuccess = () => res();
+    req.onerror = e => rej(e.target.error);
+  });
+}
+function dbDelete(store, id) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).delete(id);
+    req.onsuccess = () => res();
+    req.onerror = e => rej(e.target.error);
+  });
+}
+
+// ── Modèle ───────────────────────────────────────────
+const STATUSES = {
+  '':        { label:'Pas commencée', sigil:'',  cls:''        },
+  'waiting': { label:'En attente',    sigil:'⏸', cls:'waiting' },
+  'doing':   { label:'En cours',      sigil:'▶', cls:'doing'   },
+  'done':    { label:'Terminée',      sigil:'✓', cls:'done'    },
+};
+const STATUS_CYCLE = ['','waiting','doing','done'];
+function nextStatus(s) { const i = STATUS_CYCLE.indexOf(s||''); return STATUS_CYCLE[(i+1)%STATUS_CYCLE.length]; }
+function getStatus(item) { return item.status !== undefined ? (item.status||'') : (item.done ? 'done' : ''); }
+
+const QUADRANTS = {
+  q1: { label:'Urgent & important',      sigil:'!', cls:'q1' },
+  q2: { label:'Important & pas urgent',  sigil:'P', cls:'q2' },
+  q3: { label:'Urgent & pas important',  sigil:'D', cls:'q3' },
+  q4: { label:'Pas urgent & important',  sigil:'✕', cls:'q4' },
+};
+const Q_ORDER = ['q1','q2','q3','q4'];
+function nextPriority(p) { const i = Q_ORDER.indexOf(p||'none'); return i < 0 ? 'q1' : (i+1 < Q_ORDER.length ? Q_ORDER[i+1] : 'none'); }
+
+const CRITICITIES = ['critique','elevee','moyenne','faible'];
+const CRIT_LABELS = {critique:'Critique', elevee:'Élevée', moyenne:'Moyenne', faible:'Faible'};
+const CRIT_CSS = {critique:'critique', elevee:'elevee', moyenne:'moyenne', faible:'faible'};
+const CRIT_ORDER = {critique:0, elevee:1, moyenne:2, faible:3};
+
+const NOTE_COLORS = [
+  '#FFFFFF','#FCE1D7','#FFF2CD','#E7F1E2','#E4F3FD','#E8E5F3',
+  '#F8EADE','#F4C5AE','#FBDD9C','#C1DDBB','#B5D4F4','#C6C0E0',
+  '#E9A48A','#F7BE5D','#95C783','#85B7EB','#9787BF','#D4C2B1',
+  '#B85B52','#9D6D2C','#538154','#185FA5','#534AB7','#4C4C4B'
+];
+
+// ── Criticité helpers ────────────────────────────────
+function critBadge(c) {
+  if(!c) return '';
+  return `<span class="badge badge-${CRIT_CSS[c]||'none'}">${CRIT_LABELS[c]||c}</span>`;
+}
+function critClass(c) { return CRIT_CSS[c] || 'none'; }
+
+// ── Rendu onglets ─────────────────────────────────────
+function render() {
+  const el = document.getElementById('content'); if(!el) return;
+  if(currentTab === 'notes')  renderNotes(el);
+  else if(currentTab === 'tasks')  renderTasks(el);
+  else if(currentTab === 'matrix') renderMatrix(el);
+  else if(currentTab === 'date')   renderDate(el);
+  else if(currentTab === 'data')   renderData(el);
+}
+
+// ── Vue Notes ─────────────────────────────────────────
+function renderNotes(el) {
+  const search = notesSearchTerm.toLowerCase();
+  let filtered = notes.filter(n => {
+    if(!search) return true;
+    return (n.title||'').toLowerCase().includes(search) ||
+           (n.content||'').toLowerCase().includes(search) ||
+           (n.checklist||[]).some(i => i.text && i.text.toLowerCase().includes(search));
+  });
+  el.innerHTML = `
+    <div style="margin-bottom:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input class="input-field" id="search-notes" placeholder="Rechercher…" style="max-width:260px;flex:1" value="${search}" aria-label="Rechercher dans les notes">
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="tag-filters"></div>
+    </div>
+    <div class="notes-grid" id="notes-grid"></div>`;
+  // Tags filtres
+  const tf = document.getElementById('tag-filters');
+  if(tf && tags.length) {
+    tf.innerHTML = tags.map(t=>`<button class="tag-toggle" data-tid="${t.id}">${t.name}</button>`).join('');
+  }
+  // Grille
+  const grid = document.getElementById('notes-grid');
+  if(!grid) return;
+  if(!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><i class="bi bi-journal" style="font-size:32px"></i><p>Aucune note</p></div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(n => {
+    const bgStyle = n.color && n.color !== '#FFFFFF' ? `background:${n.color}` : '';
+    const preview = n.type === 'task'
+      ? (n.checklist||[]).map(i=>i.text).filter(Boolean).slice(0,3).join(' · ') || ''
+      : (n.content||'').replace(/<[^>]+>/g,'').slice(0,120);
+    const noteTags = (n.tags||[]).map(tid => {
+      const t = tags.find(x=>x.id===tid); return t ? `<span class="tag-chip">${t.name}</span>` : '';
+    }).join('');
+    return `<div class="note-card" style="${bgStyle}" data-nid="${n.id}" tabindex="0" role="button" aria-label="Ouvrir la note : ${n.title||'Sans titre'}">
+      <div class="note-card__title">${n.title||'Sans titre'}</div>
+      <div class="note-card__preview">${preview||'<em style="color:var(--text3)">Vide</em>'}</div>
+      ${noteTags ? `<div class="note-card__tags">${noteTags}</div>` : ''}
+    </div>`;
+  }).join('');
+  // Events notes
+  grid.querySelectorAll('.note-card').forEach(card => {
+    card.addEventListener('click', () => openNote(card.dataset.nid));
+    card.addEventListener('keydown', e => { if(e.key==='Enter') openNote(card.dataset.nid); });
+  });
+  on('search-notes','input', e => { notesSearchTerm = e.target.value; render(); });
+}
+
+// ── Vue Tâches (P1-2) ─────────────────────────────────
+function renderTasks(el) {
+  const allTasks = getAllTasks();
+  const CRIT_ALL = ['critique','elevee','moyenne','faible'];
+  // Lire filtres depuis state
+  if(!window._taskFilters) window._taskFilters = new Set(CRIT_ALL);
+  const sel = window._taskFilters;
+  const filtered = allTasks.filter(t => !sel.size || sel.has(t.criticity||'faible'));
+
+  // Compteurs par criticité (sur total)
+  const byLevel = CRIT_ALL.reduce((a,c) => { a[c] = allTasks.filter(t=>(t.criticity||'faible')===c).length; return a; }, {});
+  const isFiltered = sel.size !== 4;
+  const badgeText = isFiltered ? `Tâches (${filtered.length} filtrée${filtered.length>1?'s':''})` : `Tâches (${allTasks.length})`;
+
+  // Météo
+  const totalF = filtered.length, critF = filtered.filter(t=>t.criticity==='critique').length;
+  const ratio = totalF > 0 ? critF/totalF : 0;
+  let wState = 'calme', wLabel = 'Calme', wDesc = 'Aucune tâche critique', wDetail = 'Toutes les tâches sont sous contrôle.';
+  if(totalF > 0 && critF > 0) {
+    if(ratio <= .2)      { wState='modere'; wLabel='Modéré'; wDesc=`${critF} tâche${critF>1?'s':''} critique${critF>1?'s':''}`; wDetail='Quelques points à surveiller.'; }
+    else if(ratio <= .5) { wState='alerte'; wLabel='Alerte'; wDesc=`${critF} tâche${critF>1?'s':''} critique${critF>1?'s':''}`; wDetail='Plusieurs tâches critiques en attente.'; }
+    else                 { wState='critique'; wLabel='Critique'; wDesc=`${critF} tâche${critF>1?'s':''} critique${critF>1?'s':''}`; wDetail='À traiter en priorité.'; }
+  }
+
+  // Groupes statuts
+  const STATUS_GROUPS = [
+    { key:'doing',   label:'En cours' },
+    { key:'waiting', label:'En attente' },
+    { key:'',        label:'Pas commencées' },
+    { key:'done',    label:'Terminées' },
+  ];
+
+  el.innerHTML = `
+    <div class="tasks-layout">
+      <section class="tasks-main" aria-label="Liste des tâches">
+        <div class="tasks-header-row">
+          <span class="tasks-badge-label">${badgeText}</span>
+          ${isFiltered ? '<span class="tasks-filter-pill">filtre actif</span>' : ''}
+        </div>
+        <div class="prio-legend" aria-label="Légende des priorités">
+          <span class="prio-legend-item"><span class="prio-badge q1">!</span> Urgent & important</span>
+          <span class="prio-legend-item"><span class="prio-badge q2">P</span> Important</span>
+          <span class="prio-legend-item"><span class="prio-badge q3">D</span> Déléguer</span>
+          <span class="prio-legend-item"><span class="prio-badge q4">✕</span> Éliminer</span>
+        </div>
+        <div id="tasks-list"></div>
+      </section>
+      <aside class="tasks-sidebar" aria-label="Filtres et indicateurs">
+        <div class="sidebar-box">
+          <div class="sidebar-heading">Criticité</div>
+          ${CRIT_ALL.map(c => `
+            <label class="filter-item${sel.has(c)?'':' off'}" id="fi-${c}">
+              <input type="checkbox" ${sel.has(c)?'checked':''} data-crit="${c}" class="crit-filter-cb" aria-label="Filtrer ${CRIT_LABELS[c]}">
+              <span class="badge badge-${CRIT_CSS[c]}">${CRIT_LABELS[c]}</span>
+              <span class="filter-count">${byLevel[c]}</span>
+            </label>`).join('')}
+        </div>
+        <div class="weather-box w-${wState}" role="status" aria-live="polite">
+          <div class="sidebar-heading">Météo d'activité</div>
+          <div class="weather-indicator">
+            <span class="weather-dot"></span>
+            <span class="weather-label">${wLabel}</span>
+          </div>
+          <div class="weather-desc">${wDesc}</div>
+          <div class="weather-detail">${wDetail}</div>
+        </div>
+      </aside>
+    </div>`;
+
+  // Rendre la liste
+  const listEl = document.getElementById('tasks-list');
+  if(listEl) {
+    const groupsHtml = STATUS_GROUPS.map(g => {
+      const gTasks = filtered.filter(t => getStatus(t) === g.key)
+        .sort((a,b) => (CRIT_ORDER[a.criticity||'faible']||3) - (CRIT_ORDER[b.criticity||'faible']||3));
+      if(!gTasks.length) return '';
+      return `<div class="task-group">
+        <div class="task-group-header">${g.label} <span style="font-weight:400">(${gTasks.length})</span></div>
+        ${gTasks.map(t => taskItemHtml(t)).join('')}
+      </div>`;
+    }).join('');
+    listEl.innerHTML = groupsHtml || '<div class="empty-state"><p>Aucune tâche ne correspond aux filtres.</p></div>';
+    listEl.querySelectorAll('.task-check').forEach(btn => {
+      btn.addEventListener('click', () => toggleTask(btn.dataset.nid, btn.dataset.iid));
+    });
+    listEl.querySelectorAll('.prio-badge[data-nid]').forEach(btn => {
+      btn.addEventListener('click', () => cyclePriority(btn.dataset.nid, btn.dataset.iid));
+    });
+  }
+  // Filtres
+  el.querySelectorAll('.crit-filter-cb').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if(cb.checked) sel.add(cb.dataset.crit); else sel.delete(cb.dataset.crit);
+      renderTasks(el);
+    });
+  });
+}
+
+function taskItemHtml(t) {
+  const st = getStatus(t), cfg = STATUSES[st]||STATUSES[''];
+  const prio = t.priority||'none', pcfg = QUADRANTS[prio]||null;
+  const noteTitle = t.noteTitle ? `<span class="task-item__meta">${t.noteTitle}</span>` : '';
+  return `<div class="task-item">
+    <button class="task-check ${cfg.cls}" data-nid="${t.noteId}" data-iid="${t.id}" title="${cfg.label}" aria-label="${cfg.label}">${cfg.sigil||''}</button>
+    ${critBadge(t.criticity||'')}
+    <span class="task-item__title${st==='done'?' done':''}">${t.text}</span>
+    ${noteTitle}
+    <button class="prio-badge ${pcfg?pcfg.cls:'none'}" data-nid="${t.noteId}" data-iid="${t.id}" title="${pcfg?pcfg.label:'Sans priorité'}" aria-label="${pcfg?pcfg.label:'Sans priorité'}">${pcfg?pcfg.sigil:'·'}</button>
+  </div>`;
+}
+
+// ── Vue Matrices (P1-1) ───────────────────────────────
+function renderMatrix(el) {
+  const allTasks = getAllTasks().filter(t => getStatus(t) !== 'done');
+  el.innerHTML = `<div class="matrix-grid">${Q_ORDER.map(q => {
+    const qcfg = QUADRANTS[q];
+    const qTasks = allTasks.filter(t => t.priority === q)
+      .sort((a,b) => (CRIT_ORDER[a.criticity||'faible']||3) - (CRIT_ORDER[b.criticity||'faible']||3));
+    return `<div class="matrix-quadrant" aria-label="${qcfg.label}">
+      <h3><span class="prio-badge ${q}" style="margin-right:6px">${qcfg.sigil}</span>${qcfg.label}</h3>
+      ${qTasks.length ? qTasks.map(t => matrixCardHtml(t)).join('') : '<p style="font-size:12px;color:var(--text3);text-align:center;padding:16px 0">Aucune tâche</p>'}
+    </div>`;
+  }).join('')}</div>`;
+  el.querySelectorAll('.task-context[data-nid]').forEach(h => {
+    h.addEventListener('click', () => { openNote(h.dataset.nid); });
+  });
+  el.querySelectorAll('.task-check').forEach(btn => {
+    btn.addEventListener('click', () => toggleTask(btn.dataset.nid, btn.dataset.iid));
+  });
+}
+
+function matrixCardHtml(t) {
+  const st = getStatus(t), cfg = STATUSES[st]||STATUSES[''];
+  const tagLabel = t.tagLabel ? `[${t.tagLabel}] ` : '';
+  return `<div class="matrix-card">
+    <div class="task-context" data-nid="${t.noteId}" role="button" tabindex="0" aria-label="Aller à la note : ${t.noteTitle}">
+      ${t.tagLabel ? `<span class="task-context__tag">[${t.tagLabel}]</span>` : ''}
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${t.noteTitle}</span>
+      <svg class="task-context__arrow" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M1 5h8M5 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="task-check ${cfg.cls}" data-nid="${t.noteId}" data-iid="${t.id}" title="${cfg.label}" aria-label="${cfg.label}" style="width:18px;height:18px;font-size:10px">${cfg.sigil||''}</button>
+      ${critBadge(t.criticity||'')}
+      <span style="font-size:13px;color:var(--text1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.text}</span>
+    </div>
+  </div>`;
+}
+
+// ── Vue Date (P2-1 + P2-2) ────────────────────────────
+let dateSubTab = 'list';
+
+function renderDate(el) {
+  el.innerHTML = `
+    <nav class="date-subnav" role="tablist" aria-label="Sous-vues date">
+      <button class="date-subtab${dateSubTab==='list'?' active':''}" id="dsub-list" role="tab">Vue liste</button>
+      <button class="date-subtab${dateSubTab==='gantt'?' active':''}" id="dsub-gantt" role="tab">Vue Gantt</button>
+    </nav>
+    <div id="date-content"></div>`;
+  on('dsub-list','click',() => { dateSubTab='list'; renderDate(el); });
+  on('dsub-gantt','click',() => { dateSubTab='gantt'; renderDate(el); });
+  const dc = document.getElementById('date-content');
+  if(!dc) return;
+  if(dateSubTab==='list') renderDateList(dc);
+  else renderGantt(dc);
+}
+
+function renderDateList(el) {
+  const allTasks = getAllTasks().filter(t => getStatus(t) !== 'done');
+  const todayStr = today();
+  const now = new Date(); now.setHours(0,0,0,0);
+  const tomorrow = new Date(now); tomorrow.setDate(now.getDate()+1);
+  const endWeek = new Date(now); endWeek.setDate(now.getDate()+7);
+  const endMonth = new Date(now.getFullYear(), now.getMonth()+1, 0);
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth()+1, 1);
+  const nextMonthEnd = new Date(now.getFullYear(), now.getMonth()+2, 0);
+
+  function groupTask(t) {
+    const d = parseDate(t.due_date);
+    if(!d) return 'nodate';
+    if(d < now) return 'overdue';
+    if(d.toDateString()===now.toDateString()) return 'today';
+    if(d.toDateString()===tomorrow.toDateString()) return 'tomorrow';
+    if(d <= endWeek) return 'week';
+    if(d <= endMonth) return 'month';
+    if(d >= nextMonthStart && d <= nextMonthEnd) return 'nextmonth';
+    return 'later';
+  }
+
+  const groups = {
+    overdue:   { label:'En retard', tasks:[] },
+    today:     { label:'Aujourd\'hui', tasks:[] },
+    tomorrow:  { label:'Demain', tasks:[] },
+    week:      { label:'Cette semaine', tasks:[] },
+    month:     { label:'Ce mois', tasks:[] },
+    nextmonth: { label:'Mois prochain', tasks:[] },
+    later:     { label:'Plus tard', tasks:[] },
+    nodate:    { label:'Sans date', tasks:[] },
+  };
+
+  allTasks.forEach(t => { const g = groupTask(t); if(groups[g]) groups[g].tasks.push(t); });
+  Object.values(groups).forEach(g => {
+    g.tasks.sort((a,b) => (CRIT_ORDER[a.criticity||'faible']||3) - (CRIT_ORDER[b.criticity||'faible']||3));
+  });
+
+  const orderedKeys = ['overdue','today','tomorrow','week','month','nextmonth','later','nodate'];
+  let html = '';
+  orderedKeys.forEach(k => {
+    const g = groups[k]; if(!g.tasks.length) return;
+    html += `<div class="date-group">
+      <div class="date-group-header">${g.label} <span class="date-group-count">${g.tasks.length} tâche${g.tasks.length>1?'s':''}</span></div>
+      ${g.tasks.map(t => dateTaskHtml(t)).join('')}
+    </div>`;
+  });
+
+  el.innerHTML = html || `<div class="empty-state"><i class="bi bi-calendar" style="font-size:32px"></i><p>Aucune tâche avec une date d'échéance</p></div>`;
+  el.querySelectorAll('.task-check').forEach(btn => {
+    btn.addEventListener('click', () => toggleTask(btn.dataset.nid, btn.dataset.iid));
+  });
+}
+
+function dateTaskHtml(t) {
+  const st = getStatus(t), cfg = STATUSES[st]||STATUSES[''];
+  const days = daysFrom(t.due_date);
+  let daysHtml = '';
+  if(t.due_date) {
+    const cls = days === null ? 'no-date' : days < 0 ? 'urgent' : days <= 2 ? 'urgent' : days <= 7 ? 'soon' : 'ok';
+    const txt = days === null ? '' : days < 0 ? `Il y a ${Math.abs(days)} j` : days === 0 ? 'Aujourd\'hui' : days === 1 ? 'Demain' : `Dans ${days} j`;
+    if(txt) daysHtml = `<span class="days-left ${cls}">${txt}</span>`;
+  }
+  return `<div class="date-task-item">
+    <button class="task-check ${cfg.cls}" data-nid="${t.noteId}" data-iid="${t.id}" title="${cfg.label}" aria-label="${cfg.label}" style="width:18px;height:18px;font-size:10px">${cfg.sigil||''}</button>
+    <div class="date-task-item__body">
+      <div class="date-task-item__title">${t.text}</div>
+      <div class="date-task-item__sub">
+        ${critBadge(t.criticity||'')}
+        ${t.noteTitle ? `<span style="color:var(--text3)">${t.noteTitle}</span>` : ''}
+        ${t.due_date ? `<span>${formatDate(t.due_date)}</span>` : ''}
+        ${daysHtml}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Gantt (P2-2) ──────────────────────────────────────
+let ganttZoom = 1; // 1=mois, 2=semaine, 0.5=trimestre
+
+function renderGantt(el) {
+  const allTasks = getAllTasks().filter(t => t.start_date || t.due_date);
+  if(!allTasks.length) {
+    el.innerHTML = `<div class="empty-state"><i class="bi bi-bar-chart-steps" style="font-size:32px"></i><p>Aucune tâche avec des dates de début ou d'échéance</p></div>`;
+    return;
+  }
+
+  // Bornes temporelles
+  let minD = null, maxD = null;
+  allTasks.forEach(t => {
+    const s = parseDate(t.start_date), e = parseDate(t.due_date);
+    if(s) { if(!minD || s < minD) minD = s; }
+    if(e) { if(!maxD || e > maxD) maxD = e; }
+  });
+  if(!minD) minD = new Date();
+  if(!maxD) { maxD = new Date(minD); maxD.setDate(minD.getDate()+30); }
+  // Marge 2 jours de chaque côté
+  const displayStart = new Date(minD); displayStart.setDate(displayStart.getDate()-2);
+  const displayEnd = new Date(maxD); displayEnd.setDate(displayEnd.getDate()+2);
+  const totalDays = Math.max(1, Math.round((displayEnd - displayStart) / 86400000));
+
+  // Graduations
+  const tickInterval = totalDays <= 14 ? 1 : totalDays <= 60 ? 7 : 14;
+  const ticks = [];
+  let tickDate = new Date(displayStart);
+  while(tickDate <= displayEnd) {
+    ticks.push(new Date(tickDate));
+    tickDate.setDate(tickDate.getDate() + tickInterval);
+  }
+
+  function pct(d) { return ((d - displayStart) / (displayEnd - displayStart) * 100).toFixed(2) + '%'; }
+
+  // Axe
+  const axisHtml = `<div class="gantt-axis">
+    ${ticks.map(tick => {
+      const left = pct(tick);
+      const label = tick.toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
+      return `<div class="gantt-axis-label" style="position:absolute;left:${left};transform:translateX(-50%)">${label}</div>`;
+    }).join('')}
+  </div>`;
+
+  // Today line
+  const todayDate = new Date(); todayDate.setHours(0,0,0,0);
+  const todayPct = todayDate >= displayStart && todayDate <= displayEnd ? pct(todayDate) : null;
+
+  // Barres
+  const barsHtml = allTasks.map(t => {
+    const s = parseDate(t.start_date) || parseDate(t.due_date) || new Date();
+    const e = parseDate(t.due_date) || new Date(s.getTime() + 86400000);
+    const leftPct = Math.max(0, ((s - displayStart) / (displayEnd - displayStart) * 100));
+    const widthPct = Math.max(.5, ((e - s) / (displayEnd - displayStart) * 100));
+    const cc = {critique:'crit',elevee:'elev',moyenne:'moye',faible:'faib'}[t.criticity||'faible']||'faib';
+    const durDays = Math.round((e - s) / 86400000) + 1;
+    return `<div class="gantt-row">
+      <div class="gantt-row-label" title="${t.text}">${t.text}</div>
+      <div class="gantt-row-track">
+        ${todayPct ? `<div class="gantt-today-line" style="left:${todayPct}"></div>` : ''}
+        <div class="gantt-bar ${cc}"
+          style="left:${leftPct.toFixed(2)}%;width:${Math.min(widthPct,(100-leftPct)).toFixed(2)}%"
+          data-gantt-nid="${t.noteId}" data-gantt-iid="${t.id}"
+          data-tooltip="${t.text} — ${formatDate(t.start_date)||'?'} → ${formatDate(t.due_date)||'?'} (${durDays} j)"
+          tabindex="0" role="button" aria-label="${t.text}">
+          <span>${t.text}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="gantt-wrap">
+      <div class="gantt-header">
+        <h3>Chronologie — ${allTasks.length} tâche${allTasks.length>1?'s':''}</h3>
+        <div class="gantt-zoom">
+          <span>Du ${formatDate(displayStart.toISOString().slice(0,10))} au ${formatDate(displayEnd.toISOString().slice(0,10))}</span>
+        </div>
+      </div>
+      <div class="gantt-container">
+        <div style="position:relative;min-width:600px;margin-left:180px;height:24px">${axisHtml}</div>
+        ${barsHtml}
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:12px;color:var(--text3)">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:var(--gantt-crit)"></span>Critique</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:var(--gantt-elev)"></span>Élevée</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:var(--gantt-moye)"></span>Moyenne</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:var(--gantt-faib)"></span>Faible</span>
+    </div>`;
+
+  // Tooltip
+  const tooltip = document.getElementById('gantt-tooltip');
+  el.querySelectorAll('.gantt-bar').forEach(bar => {
+    bar.addEventListener('mouseenter', e => {
+      if(!tooltip) return;
+      tooltip.textContent = bar.dataset.tooltip;
+      tooltip.style.display = 'block';
+    });
+    bar.addEventListener('mousemove', e => {
+      if(!tooltip) return;
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top = (e.clientY - 28) + 'px';
+    });
+    bar.addEventListener('mouseleave', () => { if(tooltip) tooltip.style.display = 'none'; });
+    bar.addEventListener('click', () => { if(bar.dataset.ganttNid) openNote(bar.dataset.ganttNid); });
+    bar.addEventListener('keydown', e => { if(e.key==='Enter' && bar.dataset.ganttNid) openNote(bar.dataset.ganttNid); });
+  });
+}
+
+// ── Vue Données ───────────────────────────────────────
+function renderData(el) {
+  const totalNotes = notes.length;
+  const totalTasks = getAllTasks().length;
+  const doneTasks = getAllTasks().filter(t => getStatus(t)==='done').length;
+  el.innerHTML = `
+    <div class="data-section">
+      <h3>Statistiques</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px">
+        ${[['Notes',totalNotes],['Tâches',totalTasks],['Terminées',doneTasks],['Étiquettes',tags.length]].map(([l,v])=>`
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center">
+            <div style="font-size:24px;font-weight:600;color:var(--text1)">${v}</div>
+            <div style="font-size:12px;color:var(--text3)">${l}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="data-section">
+      <h3>Étiquettes</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px" id="tag-list"></div>
+      <div style="display:flex;gap:8px">
+        <input class="input-field" id="new-tag-input" placeholder="Nouvelle étiquette…" style="max-width:200px" aria-label="Nom de la nouvelle étiquette">
+        <button class="btn btn-primary" id="btn-add-tag">Ajouter</button>
+      </div>
+    </div>
+    <div class="data-section">
+      <h3>Export / Import</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <button class="btn btn-primary" id="btn-export">Exporter JSON</button>
+        <button class="btn btn-secondary" id="btn-import">Importer JSON</button>
+        <button class="btn btn-secondary" id="btn-report">Rapport Markdown</button>
+        <input type="file" id="import-input" accept=".json" style="display:none" aria-label="Sélectionner un fichier JSON">
+      </div>
+    </div>`;
+
+  // Tags
+  const tagList = document.getElementById('tag-list');
+  if(tagList) {
+    tagList.innerHTML = tags.map(t=>`<span style="display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:4px 10px;font-size:12px">
+      ${t.name}
+      <button data-tid="${t.id}" class="tag-del-btn" style="color:var(--text3);font-size:14px;line-height:1" aria-label="Supprimer l'étiquette ${t.name}">×</button>
+    </span>`).join('') || '<span style="font-size:13px;color:var(--text3)">Aucune étiquette</span>';
+    tagList.querySelectorAll('.tag-del-btn').forEach(b => {
+      b.addEventListener('click', () => deleteTag(b.dataset.tid));
+    });
+  }
+  on('btn-add-tag','click', addTag);
+  on('new-tag-input','keydown', e => { if(e.key==='Enter') addTag(); });
+  on('btn-export','click', exportJSON);
+  on('btn-import','click', () => document.getElementById('import-input')?.click());
+  on('import-input','change', importJSON);
+  on('btn-report','click', openReport);
+}
+
+// ── Éditeur de note ───────────────────────────────────
+function openNote(nid) {
+  const isNew = !nid;
+  const note = isNew
+    ? { id:uid(), title:'', type:'note', content:'', checklist:[], tags:[], color:'#FFFFFF', createdAt:Date.now(), updatedAt:Date.now() }
+    : notes.find(n => n.id===nid);
+  if(!note) return;
+  editingNoteId = note.id;
+
+  const modal = document.getElementById('modal-note');
+  const body = document.getElementById('modal-note-body');
+  const titleEl = document.getElementById('modal-note-title');
+  if(!modal || !body || !titleEl) return;
+  titleEl.textContent = isNew ? 'Nouvelle note' : 'Modifier la note';
+
+  const tagOptions = tags.map(t =>
+    `<label style="display:flex;align-items:center;gap:6px;font-size:13px">
+      <input type="checkbox" ${(note.tags||[]).includes(t.id)?'checked':''} data-tid="${t.id}" class="tag-cb" aria-label="${t.name}">
+      ${t.name}
+    </label>`).join('');
+
+  const colorSwatches = NOTE_COLORS.map(c =>
+    `<button class="color-swatch${note.color===c?' selected':''}" style="background:${c};border-color:${c==='#FFFFFF'?'var(--border)':'transparent'}" data-color="${c}" title="Couleur ${c}" aria-label="Couleur ${c}" aria-pressed="${note.color===c}"></button>`
+  ).join('');
+
+  body.innerHTML = `
+    <input class="input-field" id="note-title-input" value="${(note.title||'').replace(/"/g,'&quot;')}" placeholder="Titre (optionnel)" style="margin-bottom:12px" aria-label="Titre de la note">
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn btn-secondary type-btn${note.type==='note'?' btn-primary':''}" data-type="note" style="font-size:12px;padding:4px 10px">Note texte</button>
+      <button class="btn btn-secondary type-btn${note.type==='task'?' btn-primary':''}" data-type="task" style="font-size:12px;padding:4px 10px">Liste de tâches</button>
+    </div>
+    <div id="editor-area"></div>
+    <div style="margin:12px 0">
+      <div style="font-size:12px;font-weight:500;color:var(--text3);margin-bottom:6px">Couleur</div>
+      <div class="color-swatches">${colorSwatches}</div>
+    </div>
+    ${tags.length ? `<div style="margin-bottom:4px">
+      <div style="font-size:12px;font-weight:500;color:var(--text3);margin-bottom:6px">Étiquettes</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${tagOptions}</div>
+    </div>` : ''}`;
+
+  renderEditorArea(note);
+  modal.classList.add('open');
+
+  // Couleurs
+  body.querySelectorAll('.color-swatch').forEach(s => {
+    s.addEventListener('click', () => {
+      body.querySelectorAll('.color-swatch').forEach(x => { x.classList.remove('selected'); x.setAttribute('aria-pressed','false'); });
+      s.classList.add('selected'); s.setAttribute('aria-pressed','true');
+    });
+  });
+  // Type
+  body.querySelectorAll('.type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = btn.dataset.type;
+      note.type = t;
+      body.querySelectorAll('.type-btn').forEach(b => { b.classList.remove('btn-primary'); b.classList.add('btn-secondary'); });
+      btn.classList.remove('btn-secondary'); btn.classList.add('btn-primary');
+      renderEditorArea(note);
+    });
+  });
+}
+
+function renderEditorArea(note) {
+  const area = document.getElementById('editor-area'); if(!area) return;
+  if(note.type === 'note') {
+    area.innerHTML = `
+      <div class="editor-wrap">
+        <div class="editor-toolbar">
+          <button class="toolbar-btn" data-cmd="bold" title="Gras" aria-label="Gras"><b>G</b></button>
+          <button class="toolbar-btn" data-cmd="strikeThrough" title="Barré" aria-label="Barré"><s>S</s></button>
+          <button class="toolbar-btn" data-cmd="insertUnorderedList" title="Liste" aria-label="Liste à puces">• —</button>
+          <button class="toolbar-btn" data-cmd="insertOrderedList" title="Liste numérotée" aria-label="Liste numérotée">1.</button>
+        </div>
+        <div class="editor-content" id="note-content" contenteditable="true" data-placeholder="Contenu de la note…" aria-multiline="true" aria-label="Contenu de la note">${note.content||''}</div>
+      </div>`;
+    const contentEl = document.getElementById('note-content');
+    area.querySelectorAll('.toolbar-btn').forEach(btn => {
+      btn.addEventListener('click', () => { document.execCommand(btn.dataset.cmd, false, null); contentEl?.focus(); });
+    });
+    // Raccourci ----
+    contentEl?.addEventListener('keyup', e => {
+      const sel = window.getSelection(); if(!sel.rangeCount) return;
+      const node = sel.anchorNode; if(!node) return;
+      if(node.nodeType===3 && node.textContent.endsWith('----')) {
+        node.textContent = node.textContent.slice(0,-4);
+        document.execCommand('insertHTML', false, '<hr>');
+      }
+    });
+  } else {
+    // Checklist
+    const items = note.checklist||[];
+    area.innerHTML = `
+      <div id="checklist-items">
+        ${items.map(i => checklistItemHtml(i)).join('')}
+      </div>
+      <div class="checklist-add">
+        <input id="new-item-text" placeholder="Nouvelle tâche…" aria-label="Texte de la nouvelle tâche">
+        <button id="btn-add-item" class="btn btn-secondary" style="font-size:12px;padding:5px 10px">Ajouter</button>
+      </div>`;
+    area.querySelectorAll('.task-check').forEach(btn => {
+      btn.addEventListener('click', () => toggleItemInline(btn.dataset.iid, note));
+    });
+    area.querySelectorAll('.checklist-del').forEach(btn => {
+      btn.addEventListener('click', () => deleteItemInline(btn.dataset.iid, note));
+    });
+    area.querySelectorAll('.crit-select').forEach(sel => {
+      sel.addEventListener('change', () => { updateItemCriticity(sel.dataset.iid, note, sel.value); });
+    });
+    area.querySelectorAll('.date-input[data-field="due_date"]').forEach(inp => {
+      inp.addEventListener('change', () => updateItemDate(inp.dataset.iid, note, 'due_date', inp.value));
+    });
+    area.querySelectorAll('.date-input[data-field="start_date"]').forEach(inp => {
+      inp.addEventListener('change', () => updateItemDate(inp.dataset.iid, note, 'start_date', inp.value));
+    });
+    on('btn-add-item','click', () => addItemInline(note));
+    on('new-item-text','keydown', e => { if(e.key==='Enter') addItemInline(note); });
+  }
+}
+
+function checklistItemHtml(item) {
+  const st = getStatus(item), cfg = STATUSES[st]||STATUSES[''];
+  const critVal = item.criticity||'';
+  return `<div class="checklist-item" data-iid="${item.id}">
+    <button class="task-check ${cfg.cls}" data-iid="${item.id}" title="${cfg.label}" aria-label="${cfg.label}">${cfg.sigil||''}</button>
+    <span class="checklist-text${st==='done'?' done':''}">${item.text}</span>
+    <select class="crit-select" data-iid="${item.id}" title="Criticité" aria-label="Criticité de la tâche" style="flex-shrink:0">
+      <option value="">—</option>
+      ${CRITICITIES.map(c=>`<option value="${c}"${critVal===c?' selected':''}>${CRIT_LABELS[c]}</option>`).join('')}
+    </select>
+    <input class="date-input" type="date" data-iid="${item.id}" data-field="start_date" value="${item.start_date||''}" title="Date de début" aria-label="Date de début" style="width:110px">
+    <input class="date-input" type="date" data-iid="${item.id}" data-field="due_date" value="${item.due_date||''}" title="Date d'échéance" aria-label="Date d'échéance" style="width:110px">
+    <button class="checklist-del" data-iid="${item.id}" title="Supprimer" aria-label="Supprimer la tâche">
+      <i class="bi bi-trash3" style="font-size:12px"></i>
+    </button>
+  </div>`;
+}
+
+function toggleItemInline(iid, note) {
+  const item = (note.checklist||[]).find(i=>i.id===iid); if(!item) return;
+  item.status = nextStatus(getStatus(item));
+  item.done = item.status === 'done';
+  item.completedAt = item.done ? Date.now() : null;
+  const cont = document.getElementById('checklist-items'); if(!cont) return;
+  const row = cont.querySelector(`[data-iid="${iid}"]`); if(!row) return;
+  const st = getStatus(item), cfg = STATUSES[st]||STATUSES[''];
+  const cb = row.querySelector('.task-check');
+  if(cb) { cb.className=`task-check ${cfg.cls}`; cb.textContent=cfg.sigil||''; cb.title=cfg.label; }
+  const tx = row.querySelector('.checklist-text');
+  if(tx) { tx.className=`checklist-text${st==='done'?' done':''}`; }
+}
+
+function deleteItemInline(iid, note) {
+  note.checklist = (note.checklist||[]).filter(i=>i.id!==iid);
+  document.getElementById('checklist-items')?.querySelector(`[data-iid="${iid}"]`)?.remove();
+}
+
+function updateItemCriticity(iid, note, val) {
+  const item = (note.checklist||[]).find(i=>i.id===iid); if(!item) return;
+  item.criticity = val;
+}
+
+function updateItemDate(iid, note, field, val) {
+  const item = (note.checklist||[]).find(i=>i.id===iid); if(!item) return;
+  item[field] = val || null;
+}
+
+function addItemInline(note) {
+  const inp = document.getElementById('new-item-text'); if(!inp) return;
+  const text = inp.value.trim(); if(!text) return;
+  const item = { id:uid(), text, status:'', done:false, priority:null, criticity:'', start_date:null, due_date:null, completedAt:null };
+  note.checklist = [...(note.checklist||[]), item];
+  inp.value = '';
+  const cont = document.getElementById('checklist-items'); if(!cont) return;
+  cont.insertAdjacentHTML('beforeend', checklistItemHtml(item));
+  const newRow = cont.querySelector(`[data-iid="${item.id}"]`); if(!newRow) return;
+  newRow.querySelector('.task-check')?.addEventListener('click', () => toggleItemInline(item.id, note));
+  newRow.querySelector('.checklist-del')?.addEventListener('click', () => deleteItemInline(item.id, note));
+  newRow.querySelector('.crit-select')?.addEventListener('change', e => updateItemCriticity(item.id, note, e.target.value));
+  newRow.querySelectorAll('.date-input').forEach(inp2 => {
+    inp2.addEventListener('change', () => updateItemDate(item.id, note, inp2.dataset.field, inp2.value));
+  });
+  inp.focus();
+}
+
+// ── Save note ─────────────────────────────────────────
+async function saveNote() {
+  const modal = document.getElementById('modal-note'); if(!modal) return;
+  const nid = editingNoteId;
+  const existingIdx = notes.findIndex(n=>n.id===nid);
+  const existing = existingIdx>=0 ? notes[existingIdx] : null;
+
+  const titleEl = document.getElementById('note-title-input');
+  const contentEl = document.getElementById('note-content');
+  const typeBtns = modal.querySelectorAll('.type-btn');
+  const activeType = [...typeBtns].find(b => b.classList.contains('btn-primary'))?.dataset.type || (existing?.type||'note');
+  const selectedColor = modal.querySelector('.color-swatch.selected')?.dataset.color || '#FFFFFF';
+  const selectedTags = [...modal.querySelectorAll('.tag-cb:checked')].map(c=>c.dataset.tid);
+
+  const checklist = existing ? [...(existing.checklist||[])] : [];
+
+  const note = {
+    id: nid,
+    title: titleEl?.value?.trim() || '',
+    type: activeType,
+    content: activeType==='note' ? (contentEl?.innerHTML||'') : '',
+    checklist: activeType==='task' ? checklist : [],
+    tags: selectedTags,
+    color: selectedColor,
+    createdAt: existing?.createdAt || Date.now(),
+    updatedAt: Date.now(),
+  };
+  await dbPut('notes', note);
+  if(existingIdx>=0) notes[existingIdx] = note; else notes.unshift(note);
+  scheduleAutoExport();
+  document.getElementById('modal-note')?.classList.remove('open');
+  editingNoteId = null;
+  render();
+  showToast('Note enregistrée');
+}
+
+async function deleteNote() {
+  if(!editingNoteId) return;
+  if(!confirm('Supprimer cette note ?')) return;
+  await dbDelete('notes', editingNoteId);
+  notes = notes.filter(n=>n.id!==editingNoteId);
+  scheduleAutoExport();
+  document.getElementById('modal-note')?.classList.remove('open');
+  editingNoteId = null;
+  render();
+  showToast('Note supprimée');
+}
+
+// ── Tâches ────────────────────────────────────────────
+function getAllTasks() {
+  const tasks = [];
+  notes.forEach(n => {
+    if(n.type!=='task') return;
+    const noteTags = (n.tags||[]).map(tid => { const t=tags.find(x=>x.id===tid); return t?t.name:null; }).filter(Boolean);
+    const tagLabel = noteTags[0] || null;
+    (n.checklist||[]).forEach(item => {
+      if(item.separator) return;
+      tasks.push({ ...item, noteId:n.id, noteTitle:n.title||'Sans titre', tagLabel });
+    });
+  });
+  return tasks;
+}
+
+async function toggleTask(noteId, itemId) {
+  const note = notes.find(n=>n.id===noteId); if(!note) return;
+  const item = (note.checklist||[]).find(i=>i.id===itemId); if(!item) return;
+  item.status = nextStatus(getStatus(item));
+  item.done = item.status==='done';
+  item.completedAt = item.done ? Date.now() : null;
+  note.updatedAt = Date.now();
+  await dbPut('notes', note);
+  scheduleAutoExport();
+  render();
+}
+
+async function cyclePriority(noteId, itemId) {
+  const note = notes.find(n=>n.id===noteId); if(!note) return;
+  const item = (note.checklist||[]).find(i=>i.id===itemId); if(!item) return;
+  item.priority = nextPriority(item.priority||'none');
+  note.updatedAt = Date.now();
+  await dbPut('notes', note);
+  scheduleAutoExport();
+  render();
+}
+
+// ── Tags ──────────────────────────────────────────────
+async function addTag() {
+  const inp = document.getElementById('new-tag-input'); if(!inp) return;
+  const name = inp.value.trim(); if(!name) return;
+  if(tags.find(t=>t.name.toLowerCase()===name.toLowerCase())) { showToast('Cette étiquette existe déjà'); return; }
+  const tag = { id:uid(), name };
+  tags.push(tag);
+  await dbPut('tags', tag);
+  inp.value = '';
+  scheduleAutoExport();
+  render();
+}
+
+async function deleteTag(tid) {
+  if(!confirm('Supprimer cette étiquette ?')) return;
+  tags = tags.filter(t=>t.id!==tid);
+  notes = notes.map(n => ({ ...n, tags:(n.tags||[]).filter(id=>id!==tid) }));
+  await dbDelete('tags', tid);
+  for(const n of notes) await dbPut('notes', n);
+  scheduleAutoExport();
+  render();
+}
+
+// ── Export / Import ───────────────────────────────────
+async function exportJSON() {
+  const data = JSON.stringify({ notes, tags, version: APP_VERSION, exportedAt: new Date().toISOString() }, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `notes-export-${today()}.json`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('Export téléchargé');
+}
+
+async function importJSON(e) {
+  const file = e.target.files?.[0]; if(!file) return;
+  const text = await file.text();
+  try {
+    const data = JSON.parse(text);
+    if(!data.notes || !Array.isArray(data.notes)) throw new Error('Format invalide');
+    const nCount = data.notes.length, tCount = (data.tags||[]).length;
+    if(!confirm(`Importer ${nCount} note${nCount>1?'s':''} et ${tCount} étiquette${tCount>1?'s':''} ?\n\nAttention : les données actuelles seront remplacées.`)) return;
+    // Clear stores
+    for(const n of notes) await dbDelete('notes', n.id);
+    for(const t of tags) await dbDelete('tags', t.id);
+    notes = data.notes; tags = data.tags||[];
+    for(const n of notes) await dbPut('notes', n);
+    for(const t of tags) await dbPut('tags', t);
+    scheduleAutoExport();
+    render();
+    showToast(`Import réussi — ${nCount} note${nCount>1?'s':''}${tCount?', '+tCount+' étiquette'+(tCount>1?'s':''):''}`);
+  } catch(err) {
+    showToast('Erreur lors de l\'import : format invalide');
+  }
+  e.target.value = '';
+}
+
+// ── Rapport ───────────────────────────────────────────
+function openReport() {
+  const modal = document.getElementById('modal-report');
+  const body = document.getElementById('modal-report-body');
+  if(!modal || !body) return;
+  const allTasks = getAllTasks();
+  const STATUSES_FILTER = ['doing','waiting','','done'];
+  const STATUS_LABELS = {'doing':'En cours','waiting':'En attente','':'Pas commencées','done':'Terminées'};
+  let selectedStatuses = new Set(STATUSES_FILTER);
+
+  function renderReport() {
+    const filtered = allTasks.filter(t => selectedStatuses.has(getStatus(t)));
+    const markdown = ['# Rapport de tâches', `Date : ${new Date().toLocaleDateString('fr-FR')}`, ''];
+    STATUSES_FILTER.forEach(s => {
+      if(!selectedStatuses.has(s)) return;
+      const group = filtered.filter(t => getStatus(t)===s).sort((a,b)=>(CRIT_ORDER[a.criticity||'faible']||3)-(CRIT_ORDER[b.criticity||'faible']||3));
+      if(!group.length) return;
+      markdown.push(`## ${STATUS_LABELS[s]}`);
+      group.forEach(t => { markdown.push(`- [${CRIT_LABELS[t.criticity||'faible']}] ${t.text} (${t.noteTitle})`); });
+      markdown.push('');
+    });
+    document.getElementById('report-output').textContent = markdown.join('\n');
+  }
+
+  body.innerHTML = `
+    <div class="report-step">
+      <h3>Statuts à inclure</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${STATUSES_FILTER.map(s=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px">
+          <input type="checkbox" checked data-rstatus="${s}" class="rstat-cb" aria-label="${STATUS_LABELS[s]}"> ${STATUS_LABELS[s]}
+        </label>`).join('')}
+      </div>
+    </div>
+    <div class="report-step">
+      <h3>Rapport</h3>
+      <pre class="report-output" id="report-output"></pre>
+      <button class="btn btn-secondary" id="btn-copy-report" style="margin-top:8px">Copier</button>
+    </div>`;
+
+  renderReport();
+  body.querySelectorAll('.rstat-cb').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if(cb.checked) selectedStatuses.add(cb.dataset.rstatus); else selectedStatuses.delete(cb.dataset.rstatus);
+      renderReport();
+    });
+  });
+  on('btn-copy-report','click', () => {
+    navigator.clipboard.writeText(document.getElementById('report-output')?.textContent||'').then(()=>showToast('Copié !'));
+  });
+  modal.classList.add('open');
+}
+
+// ── Thème ─────────────────────────────────────────────
+let currentTheme = localStorage.getItem('theme') || 'light';
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  const icon = document.getElementById('theme-icon');
+  if(icon) { icon.className = currentTheme==='dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill'; }
+  localStorage.setItem('theme', currentTheme);
+}
+
+// ── Changelog ─────────────────────────────────────────
+const CHANGELOG = [
+  { version:'3.0.0', date:'2026-04-14', tag:'major', entries:[
+    { icon:'✨', text:'P1-1 — contexte note/étiquette dans la vue Matrices avec navigation vers la note source.' },
+    { icon:'✨', text:'P1-2 — onglet Tâches refondu : layout 2 colonnes, filtre par criticité, météo d\'activité dynamique.' },
+    { icon:'✨', text:'P2-1 — onglet Date : vue chronologique groupée (En retard, Aujourd\'hui, Demain, Semaine, Mois, Sans date).' },
+    { icon:'✨', text:'P2-2 — vue Gantt SVG pur (zéro dépendance) avec tooltips, navigation au clic, ligne "aujourd\'hui".' },
+    { icon:'🔧', text:'Modèle étendu : champs criticity, start_date, due_date sur chaque item de checklist.' },
+    { icon:'🔧', text:'Éditeur enrichi : sélecteur de criticité et dates de début/échéance directement dans la liste.' },
+  ]},
+  { version:'2.0.2', date:'2026-03-29', tag:'minor', entries:[
+    { icon:'✨', text:'4 statuts de tâche (pas commencée, en attente, en cours, terminée) avec cycle au clic.' },
+    { icon:'📊', text:'Rapport filtrable par statut.' },
+    { icon:'🐛', text:'Suppression de la vue tâches dupliquée.' },
+  ]},
+  { version:'1.9.0', date:'2026-03-20', tag:'minor', entries:[
+    { icon:'♿', text:'Indicateurs Eisenhower accessibles : sigle + couleur, légende permanente.' },
+    { icon:'🐛', text:'Correction balise <\\/script> dans le changelog.' },
+    { icon:'🔒', text:'Helper on() sécurisé pour l\'attachement des events.' },
+  ]},
+  { version:'1.8.0', date:'2026-03-19', tag:'minor', entries:[
+    { icon:'✨', text:'Sélecteur de couleur 24 teintes, changelog intégré, badge version.' },
+  ]},
+];
+
+function openChangelog() {
+  const modal = document.getElementById('modal-changelog');
+  const body = document.getElementById('modal-changelog-body');
+  if(!modal||!body) return;
+  body.innerHTML = CHANGELOG.map(entry => `
+    <div class="changelog-entry">
+      <div class="changelog-entry-header">
+        <span class="changelog-version">v${entry.version}</span>
+        <span class="changelog-date">${entry.date}</span>
+        <span class="changelog-tag ${entry.tag}">${entry.tag==='major'?'Majeure':entry.tag==='minor'?'Mineure':'Correctif'}</span>
+      </div>
+      <ul class="changelog-items">
+        ${entry.entries.map(e=>`<li><span>${e.icon}</span><span>${e.text}</span></li>`).join('')}
+      </ul>
+    </div>`).join('');
+  modal.classList.add('open');
+}
+
+// ── Vérification MAJ ──────────────────────────────────
+async function checkForUpdate() {
+  if(!location.hostname || location.hostname==='localhost') return;
+  const lastCheck = parseInt(localStorage.getItem('update-last-check')||'0');
+  if(Date.now()-lastCheck < 3600000) return;
+  localStorage.setItem('update-last-check', Date.now());
+  try {
+    const res = await fetch('./version.json?t='+Date.now(), {cache:'no-store'});
+    if(!res.ok) return;
+    const data = await res.json();
+    if(data.version && data.version !== APP_VERSION) {
+      const dismissed = localStorage.getItem('update-dismissed');
+      if(dismissed === data.version) return;
+      const banner = document.getElementById('update-banner');
+      const msg = document.getElementById('update-msg');
+      if(banner) { if(msg) msg.textContent=`Nouvelle version v${data.version}${data.summary?' — '+data.summary:''}`;  banner.classList.add('visible'); }
+    }
+  } catch(e) {}
+}
+
+// ── Init ──────────────────────────────────────────────
+async function init() {
+  applyTheme();
+  try { db = await openDB(); } catch(e) {
+    const backup = localStorage.getItem('notes-backup');
+    if(backup) { try { const d=JSON.parse(backup); notes=d.notes||[]; tags=d.tags||[]; } catch(e2) {} }
+    render(); setSyncStatus('saved'); return;
+  }
+  [notes, tags] = await Promise.all([dbGetAll('notes'), dbGetAll('tags')]);
+  render(); setSyncStatus('saved');
+  setTimeout(checkForUpdate, 2000);
+}
+
+// ── Events globaux ────────────────────────────────────
+on('fab-add','click', () => openNote(null));
+on('note-save','click', saveNote);
+on('note-delete','click', deleteNote);
+on('note-cancel','click', () => { document.getElementById('modal-note')?.classList.remove('open'); editingNoteId=null; });
+on('note-close','click', () => { document.getElementById('modal-note')?.classList.remove('open'); editingNoteId=null; });
+on('btn-version','click', openChangelog);
+on('changelog-close','click', () => document.getElementById('modal-changelog')?.classList.remove('open'));
+on('report-close','click', () => document.getElementById('modal-report')?.classList.remove('open'));
+on('btn-theme','click', () => { currentTheme = currentTheme==='dark'?'light':'dark'; applyTheme(); });
+on('btn-update-dismiss','click', () => {
+  const match = document.getElementById('update-msg')?.textContent.match(/v(\d+\.\d+\.\d+)/);
+  if(match) localStorage.setItem('update-dismissed',match[1]);
+  document.getElementById('update-banner')?.classList.remove('visible');
+});
+on('btn-update-save','click', async () => { await exportJSON(); showToast('Sauvegarde effectuée — rechargement…'); setTimeout(()=>location.reload(true),1800); });
+
+// Onglets
+['notes','tasks','matrix','date','data'].forEach(tab => {
+  on('tab-'+tab,'click', () => {
+    currentTab = tab;
+    document.querySelectorAll('.nav-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+    const activeTab = document.getElementById('tab-'+tab);
+    if(activeTab) { activeTab.classList.add('active'); activeTab.setAttribute('aria-selected','true'); }
+    render();
+  });
+});
+
+// Fermer modals sur overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.classList.remove('open'); });
+});
+
+init();
+</script>
+</body>
+</html>
