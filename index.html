@@ -255,9 +255,29 @@ a{color:var(--red);text-decoration:none}
 .changelog-items{list-style:none;padding:0;display:flex;flex-direction:column;gap:5px}
 .changelog-items li{font-size:13px;color:var(--text2);display:flex;gap:8px}
 .changelog-items li span:first-child{font-size:14px;flex-shrink:0}
-/* ── Footer ── */
-.app-footer{padding:10px 16px;border-top:1px solid var(--border);background:var(--surface2);display:flex;align-items:flex-start;gap:8px;font-size:11px;color:var(--text3);line-height:1.5;flex-shrink:0}
-.app-footer i{flex-shrink:0;margin-top:1px;color:var(--c-elev-tx)}
+/* ── Bandeau filtres global ── */
+.filter-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap;min-height:44px}
+.filter-bar-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);white-space:nowrap;margin-right:4px}
+.filter-pill{padding:3px 10px;border-radius:10px;font-size:12px;border:1px solid var(--border);color:var(--text2);background:var(--surface);transition:background .12s,color .12s,border-color .12s;white-space:nowrap}
+.filter-pill.active{background:var(--red);color:#fff;border-color:var(--red)}
+.filter-pill-date{padding:3px 8px;border-radius:10px;font-size:12px;border:1px solid var(--border);color:var(--text2);background:var(--surface)}
+.filter-pill-date:focus{outline:2px solid var(--red);outline-offset:1px}
+.filter-bar-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;margin:0 4px}
+/* ── Sélection multiple checklist ── */
+.checklist-item.selected{background:var(--surface2);border-radius:var(--radius-sm)}
+.item-select-cb{width:15px;height:15px;accent-color:var(--red);cursor:pointer;flex-shrink:0}
+.bulk-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;flex-wrap:wrap}
+.bulk-bar-count{font-size:12px;color:var(--text2);flex:1}
+/* ── Modal purge ── */
+.purge-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;font-size:13px}
+.purge-item input{accent-color:var(--red);width:15px;height:15px;cursor:pointer;flex-shrink:0}
+/* ── Footer enrichi ── */
+.app-footer{padding:8px 16px;border-top:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;gap:12px;font-size:11px;color:var(--text3);line-height:1.5;flex-shrink:0;flex-wrap:wrap}
+.app-footer-warn{display:flex;align-items:flex-start;gap:6px;flex:1;min-width:200px}
+.app-footer-warn i{flex-shrink:0;margin-top:1px;color:var(--c-elev-tx)}
+.app-footer-actions{display:flex;gap:8px;flex-shrink:0}
+.footer-btn{padding:3px 10px;border-radius:var(--radius-sm);font-size:11px;border:1px solid var(--border);color:var(--text2);background:var(--surface);white-space:nowrap}
+.footer-btn:hover{border-color:var(--border2);color:var(--text1)}
 /* ── Aide ── */
 .help-section{margin-bottom:28px}
 .help-section h3{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
@@ -288,7 +308,7 @@ a{color:var(--red);text-decoration:none}
 <div id="app">
   <div class="topbar">
     <div class="topbar-title">notes<span>.</span></div>
-    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.0.0</button>
+    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.1.0</button>
     <span class="topbar-sync" id="sync-status" aria-live="polite"></span>
     <button class="topbar-theme" id="btn-theme" aria-label="Basculer thème" title="Thème clair/sombre">
       <i class="bi bi-moon-fill" id="theme-icon"></i>
@@ -300,12 +320,18 @@ a{color:var(--red);text-decoration:none}
     <button class="nav-tab" id="tab-matrix" role="tab" aria-selected="false">Matrices</button>
     <button class="nav-tab" id="tab-date" role="tab" aria-selected="false">Date</button>
     <button class="nav-tab" id="tab-data" role="tab" aria-selected="false">Données</button>
-    <button class="nav-tab" id="tab-help" role="tab" aria-selected="false">Aide</button>
   </nav>
+  <div class="filter-bar" id="global-filter-bar" role="search" aria-label="Filtres globaux"></div>
   <div class="content" id="content" role="main"></div>
   <footer class="app-footer" role="contentinfo">
-    <i class="bi bi-exclamation-triangle-fill"></i>
-    <span>Les données sont stockées localement dans votre navigateur. Vider le cache supprime toutes les notes — exportez régulièrement une sauvegarde depuis l'onglet Données.</span>
+    <div class="app-footer-warn">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>Données stockées localement — vider le cache supprime toutes les notes. Exportez régulièrement.</span>
+    </div>
+    <div class="app-footer-actions">
+      <button class="footer-btn" id="btn-purge" title="Lister les notes dont toutes les tâches sont terminées"><i class="bi bi-trash3"></i> À supprimer ?</button>
+      <button class="footer-btn" id="btn-help-footer" title="Aide"><i class="bi bi-question-circle"></i> Aide</button>
+    </div>
   </footer>
   <button class="fab" id="fab-add" aria-label="Nouvelle note">
     <i class="bi bi-plus-lg"></i>
@@ -363,9 +389,24 @@ a{color:var(--red);text-decoration:none}
   </div>
 </div>
 
+<!-- Modal purge -->
+<div class="modal-overlay" id="modal-purge" role="dialog" aria-modal="true" aria-labelledby="modal-purge-title">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h2 id="modal-purge-title">À supprimer ?</h2>
+      <button class="modal-close" id="purge-close" aria-label="Fermer"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body" id="modal-purge-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="purge-cancel">Annuler</button>
+      <button class="btn btn-danger" id="purge-confirm">Supprimer la sélection</button>
+    </div>
+  </div>
+</div>
+
 <script>
 'use strict';
-const APP_VERSION = '3.0.0';
+const APP_VERSION = '3.1.0';
 const DB_NAME = 'notes-db', DB_VERSION = 2;
 let db, notes = [], tags = [], currentTab = 'notes';
 let editingNoteId = null;
@@ -478,7 +519,84 @@ const NOTE_COLORS = [
   '#B85B52','#9D6D2C','#538154','#185FA5','#534AB7','#4C4C4B'
 ];
 
-// ── Criticité helpers ────────────────────────────────
+// ── State global filtres ──────────────────────────────
+const globalFilters = {
+  tags: new Set(),       // étiquettes actives (vide = toutes)
+  criticities: new Set(), // criticités actives (vide = toutes)
+  dateFrom: '',
+  dateTo: '',
+};
+
+function renderFilterBar() {
+  const bar = document.getElementById('global-filter-bar');
+  if(!bar) return;
+  const tab = currentTab;
+  const showTags = ['notes','tasks','matrix','data'].includes(tab);
+  const showCrit = ['tasks','matrix','date'].includes(tab);
+  const showDate = tab === 'date';
+
+  if(!showTags && !showCrit && !showDate) { bar.innerHTML = ''; return; }
+
+  let html = '';
+  if(showTags && tags.length) {
+    html += `<span class="filter-bar-label">Étiquettes</span>`;
+    html += tags.map(t => `<button class="filter-pill${globalFilters.tags.has(t.id)?' active':''}" data-ftag="${t.id}">${t.name}</button>`).join('');
+    if(showCrit) html += `<span class="filter-bar-sep"></span>`;
+  }
+  if(showCrit) {
+    html += `<span class="filter-bar-label">Criticité</span>`;
+    html += ['critique','elevee','moyenne','faible'].map(c =>
+      `<button class="filter-pill${globalFilters.criticities.has(c)?' active':''}" data-fcrit="${c}">${CRIT_LABELS[c]}</button>`
+    ).join('');
+  }
+  if(showDate) {
+    if(showTags||showCrit) html += `<span class="filter-bar-sep"></span>`;
+    html += `<span class="filter-bar-label">Du</span>
+      <input class="filter-pill-date" type="date" id="fdate-from" value="${globalFilters.dateFrom}" aria-label="Date de début du filtre">
+      <span class="filter-bar-label">au</span>
+      <input class="filter-pill-date" type="date" id="fdate-to" value="${globalFilters.dateTo}" aria-label="Date de fin du filtre">`;
+  }
+  bar.innerHTML = html;
+
+  bar.querySelectorAll('[data-ftag]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tid = btn.dataset.ftag;
+      if(globalFilters.tags.has(tid)) globalFilters.tags.delete(tid); else globalFilters.tags.add(tid);
+      render();
+    });
+  });
+  bar.querySelectorAll('[data-fcrit]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const c = btn.dataset.fcrit;
+      if(globalFilters.criticities.has(c)) globalFilters.criticities.delete(c); else globalFilters.criticities.add(c);
+      render();
+    });
+  });
+  const fd = document.getElementById('fdate-from');
+  const ft = document.getElementById('fdate-to');
+  if(fd) fd.addEventListener('change', () => { globalFilters.dateFrom = fd.value; render(); });
+  if(ft) ft.addEventListener('change', () => { globalFilters.dateTo = ft.value; render(); });
+}
+
+// Helper : une note correspond-elle aux filtres globaux étiquettes ?
+function noteMatchesGlobalFilters(n) {
+  if(globalFilters.tags.size && !(n.tags||[]).some(tid => globalFilters.tags.has(tid))) return false;
+  return true;
+}
+// Helper : une tâche correspond-elle aux filtres globaux ?
+function taskMatchesGlobalFilters(t) {
+  if(globalFilters.tags.size && !globalFilters.tags.has(t.tagId||'') && !(notes.find(n=>n.id===t.noteId)?.tags||[]).some(tid=>globalFilters.tags.has(tid))) return false;
+  if(globalFilters.criticities.size && !globalFilters.criticities.has(t.criticity||'faible')) return false;
+  return true;
+}
+function taskMatchesDateFilter(t) {
+  if(!globalFilters.dateFrom && !globalFilters.dateTo) return true;
+  const d = t.due_date || t.start_date;
+  if(!d) return false;
+  if(globalFilters.dateFrom && d < globalFilters.dateFrom) return false;
+  if(globalFilters.dateTo && d > globalFilters.dateTo) return false;
+  return true;
+}
 function critBadge(c) {
   if(!c) return '';
   return `<span class="badge badge-${CRIT_CSS[c]||'none'}">${CRIT_LABELS[c]||c}</span>`;
@@ -503,6 +621,7 @@ function textColorForBg(hex) {
   return contrastRatio(hex, '#333333') >= 4.5 ? '#333333' : '#FFFFFF';
 }
 function render() {
+  renderFilterBar();
   const el = document.getElementById('content'); if(!el) return;
   if(currentTab === 'notes')  renderNotes(el);
   else if(currentTab === 'tasks')  renderTasks(el);
@@ -522,6 +641,7 @@ function renderNotes(el) {
       (n.checklist||[]).some(i => i.text && i.text.toLowerCase().includes(search))
     )) return false;
     if(activeTagFilters.size && !(n.tags||[]).some(tid => activeTagFilters.has(tid))) return false;
+    if(!noteMatchesGlobalFilters(n)) return false;
     return true;
   });
   el.innerHTML = `
@@ -582,7 +702,7 @@ function renderTasks(el) {
   // Lire filtres depuis state
   if(!window._taskFilters) window._taskFilters = new Set(CRIT_ALL);
   const sel = window._taskFilters;
-  const filtered = allTasks.filter(t => !sel.size || sel.has(t.criticity||'faible'));
+  const filtered = allTasks.filter(t => (!sel.size || sel.has(t.criticity||'faible')) && taskMatchesGlobalFilters(t));
 
   // Compteurs par criticité (sur total)
   const byLevel = CRIT_ALL.reduce((a,c) => { a[c] = allTasks.filter(t=>(t.criticity||'faible')===c).length; return a; }, {});
@@ -686,37 +806,119 @@ function taskItemHtml(t) {
   </div>`;
 }
 
-// ── Vue Matrices (P1-1) ───────────────────────────────
+// ── Purge notes terminées ─────────────────────────────
+function openPurge() {
+  const modal = document.getElementById('modal-purge');
+  const body  = document.getElementById('modal-purge-body');
+  if(!modal || !body) return;
+
+  const candidates = notes.filter(n =>
+    n.type === 'task' &&
+    (n.checklist||[]).length > 0 &&
+    (n.checklist||[]).filter(i=>!i.separator).every(i => getStatus(i) === 'done')
+  );
+
+  if(!candidates.length) {
+    body.innerHTML = `<p style="font-size:13px;color:var(--text3);padding:8px 0">Aucune liste dont toutes les tâches sont terminées.</p>`;
+    document.getElementById('purge-confirm').style.display = 'none';
+  } else {
+    document.getElementById('purge-confirm').style.display = '';
+    body.innerHTML = `
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">${candidates.length} liste${candidates.length>1?'s':''} dont toutes les tâches sont terminées :</p>
+      <div id="purge-list">
+        ${candidates.map(n => {
+          const noteTags = (n.tags||[]).map(tid=>tags.find(t=>t.id===tid)?.name||'').filter(Boolean).join(', ');
+          return `<div class="purge-item">
+            <input type="checkbox" checked data-nid="${n.id}" class="purge-cb" aria-label="Sélectionner ${n.title||'Sans titre'}">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n.title||'Sans titre'}</div>
+              ${noteTags ? `<div style="font-size:11px;color:var(--text3)">${noteTags}</div>` : ''}
+            </div>
+            <span style="font-size:11px;color:var(--text3);white-space:nowrap">${(n.checklist||[]).filter(i=>!i.separator).length} tâche${(n.checklist||[]).filter(i=>!i.separator).length>1?'s':''}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+  modal.classList.add('open');
+
+  on('purge-confirm','click', async () => {
+    const toDelete = [...modal.querySelectorAll('.purge-cb:checked')].map(cb => cb.dataset.nid);
+    if(!toDelete.length) { showToast('Aucune note sélectionnée'); return; }
+    if(!confirm(`Supprimer définitivement ${toDelete.length} note${toDelete.length>1?'s':''} ?`)) return;
+    for(const nid of toDelete) {
+      await dbDelete('notes', nid);
+      notes = notes.filter(n => n.id !== nid);
+    }
+    scheduleAutoExport();
+    render();
+    modal.classList.remove('open');
+    showToast(`${toDelete.length} note${toDelete.length>1?'s':''} supprimée${toDelete.length>1?'s':''}`);
+  });
+  on('purge-cancel','click',  () => modal.classList.remove('open'));
+  on('purge-close','click',   () => modal.classList.remove('open'));
+}
+const matrixExtraFilters = { tags: new Set(), crits: new Set() };
+
 function renderMatrix(el) {
   const allTasks = getAllTasks().filter(t => getStatus(t) !== 'done');
-  // Filtres quadrants
+
   el.innerHTML = `
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px" role="group" aria-label="Filtrer par quadrant">
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px" role="group" aria-label="Filtres Matrices">
+      <span style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">Quadrants</span>
       ${Q_ORDER.map(q => {
-        const qcfg = QUADRANTS[q];
-        const active = matrixFilter.has(q);
+        const qcfg = QUADRANTS[q], active = matrixFilter.has(q);
         return `<button class="prio-badge ${q}" data-qfilter="${q}"
           style="padding:4px 12px;width:auto;height:auto;font-size:12px;font-weight:500;opacity:${active?'1':'.4'};border:2px solid ${active?'currentColor':'transparent'}"
-          aria-pressed="${active}" title="${qcfg.label}">${qcfg.sigil} ${qcfg.label}</button>`;
+          aria-pressed="${active}">${qcfg.sigil} ${qcfg.label}</button>`;
       }).join('')}
+      ${tags.length ? `<span class="filter-bar-sep"></span>
+      <span style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">Étiquettes</span>
+      ${tags.map(t=>`<button class="filter-pill${matrixExtraFilters.tags.has(t.id)?' active':''}" data-mftag="${t.id}">${t.name}</button>`).join('')}` : ''}
+      <span class="filter-bar-sep"></span>
+      <span style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">Criticité</span>
+      ${['critique','elevee','moyenne','faible'].map(c=>
+        `<button class="filter-pill${matrixExtraFilters.crits.has(c)?' active':''}" data-mfcrit="${c}">${CRIT_LABELS[c]}</button>`
+      ).join('')}
     </div>
     <div class="matrix-grid" id="matrix-quadrants"></div>`;
 
-  // Events filtres
   el.querySelectorAll('[data-qfilter]').forEach(btn => {
     btn.addEventListener('click', () => {
       const q = btn.dataset.qfilter;
-      if(matrixFilter.has(q)) { if(matrixFilter.size > 1) matrixFilter.delete(q); }
-      else matrixFilter.add(q);
+      if(matrixFilter.has(q)) { if(matrixFilter.size > 1) matrixFilter.delete(q); } else matrixFilter.add(q);
+      renderMatrix(el);
+    });
+  });
+  el.querySelectorAll('[data-mftag]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tid = btn.dataset.mftag;
+      if(matrixExtraFilters.tags.has(tid)) matrixExtraFilters.tags.delete(tid); else matrixExtraFilters.tags.add(tid);
+      renderMatrix(el);
+    });
+  });
+  el.querySelectorAll('[data-mfcrit]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const c = btn.dataset.mfcrit;
+      if(matrixExtraFilters.crits.has(c)) matrixExtraFilters.crits.delete(c); else matrixExtraFilters.crits.add(c);
       renderMatrix(el);
     });
   });
 
   const grid = document.getElementById('matrix-quadrants');
   if(!grid) return;
+
+  const visibleTasks = allTasks.filter(t => {
+    if(matrixExtraFilters.tags.size) {
+      const noteTags = notes.find(n=>n.id===t.noteId)?.tags||[];
+      if(!noteTags.some(tid=>matrixExtraFilters.tags.has(tid))) return false;
+    }
+    if(matrixExtraFilters.crits.size && !matrixExtraFilters.crits.has(t.criticity||'faible')) return false;
+    return true;
+  });
+
   grid.innerHTML = Q_ORDER.filter(q => matrixFilter.has(q)).map(q => {
     const qcfg = QUADRANTS[q];
-    const qTasks = allTasks.filter(t => t.priority === q)
+    const qTasks = visibleTasks.filter(t => t.priority === q)
       .sort((a,b) => (CRIT_ORDER[a.criticity||'faible']||3) - (CRIT_ORDER[b.criticity||'faible']||3));
     return `<div class="matrix-quadrant" aria-label="${qcfg.label}">
       <h3><span class="prio-badge ${q}" style="margin-right:6px">${qcfg.sigil}</span>${qcfg.label} <span style="font-weight:400;font-size:11px;color:var(--text3)">(${qTasks.length})</span></h3>
@@ -725,7 +927,7 @@ function renderMatrix(el) {
   }).join('');
 
   grid.querySelectorAll('.task-context[data-nid]').forEach(h => {
-    h.addEventListener('click', () => { openNote(h.dataset.nid); });
+    h.addEventListener('click', () => openNote(h.dataset.nid));
   });
   grid.querySelectorAll('.task-check').forEach(btn => {
     btn.addEventListener('click', () => toggleTask(btn.dataset.nid, btn.dataset.iid));
@@ -1049,18 +1251,55 @@ function renderHelp(el) {
 
 // ── Vue Données ───────────────────────────────────────
 function renderData(el) {
+  const allTasks   = getAllTasks();
   const totalNotes = notes.length;
-  const totalTasks = getAllTasks().length;
-  const doneTasks = getAllTasks().filter(t => getStatus(t)==='done').length;
+  const totalTasks = allTasks.length;
+  const doneTasks  = allTasks.filter(t => getStatus(t)==='done').length;
+
+  // Stats par criticité
+  const byCrit = ['critique','elevee','moyenne','faible'].map(c => ({
+    c, label: CRIT_LABELS[c], count: allTasks.filter(t=>(t.criticity||'faible')===c).length
+  }));
+  // Stats par étiquette
+  const byTag = tags.map(t => ({
+    t, count: notes.filter(n=>(n.tags||[]).includes(t.id)).length
+  }));
+
   el.innerHTML = `
     <div class="data-section">
       <h3>Statistiques</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px">
-        ${[['Notes',totalNotes],['Tâches',totalTasks],['Terminées',doneTasks],['Étiquettes',tags.length]].map(([l,v])=>`
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center">
-            <div style="font-size:24px;font-weight:600;color:var(--text1)">${v}</div>
-            <div style="font-size:12px;color:var(--text3)">${l}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px">
+        ${[['Notes',totalNotes,'bi-journal'],['Tâches',totalTasks,'bi-check2-square'],['Terminées',doneTasks,'bi-check2-all'],['Étiquettes',tags.length,'bi-tag']].map(([l,v,ic])=>`
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center">
+            <i class="bi ${ic}" style="font-size:18px;color:var(--text3)"></i>
+            <div style="font-size:22px;font-weight:600;color:var(--text1);margin-top:4px">${v}</div>
+            <div style="font-size:11px;color:var(--text3)">${l}</div>
           </div>`).join('')}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+          <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:8px">Tâches par criticité</div>
+          ${byCrit.map(({c,label,count})=>`
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+              <span class="badge badge-${c}" style="min-width:60px;justify-content:center">${label}</span>
+              <div style="flex:1;height:6px;background:var(--surface3);border-radius:3px">
+                <div style="width:${totalTasks?Math.round(count/totalTasks*100):0}%;height:100%;border-radius:3px;background:var(--c-${c==='elevee'?'elev':c==='moyenne'?'moye':c==='faible'?'faib':'crit'}-tx)"></div>
+              </div>
+              <span style="font-size:12px;color:var(--text2);min-width:20px;text-align:right">${count}</span>
+            </div>`).join('')}
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+          <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:8px">Notes par étiquette</div>
+          ${byTag.length ? byTag.map(({t,count})=>`
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+              <span class="tag-chip" style="min-width:60px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</span>
+              <div style="flex:1;height:6px;background:var(--surface3);border-radius:3px">
+                <div style="width:${totalNotes?Math.round(count/totalNotes*100):0}%;height:100%;border-radius:3px;background:var(--text3)"></div>
+              </div>
+              <span style="font-size:12px;color:var(--text2);min-width:20px;text-align:right">${count}</span>
+            </div>`).join('')
+          : '<span style="font-size:12px;color:var(--text3)">Aucune étiquette</span>'}
+        </div>
       </div>
     </div>
     <div class="data-section">
@@ -1075,13 +1314,13 @@ function renderData(el) {
       <h3>Export / Import</h3>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         <button class="btn btn-primary" id="btn-export">Exporter JSON</button>
+        <button class="btn btn-secondary" id="btn-export-enc"><i class="bi bi-lock"></i> Exporter chiffré</button>
         <button class="btn btn-secondary" id="btn-import">Importer JSON</button>
-        <button class="btn btn-secondary" id="btn-report">Rapport Markdown</button>
-        <input type="file" id="import-input" accept=".json" style="display:none" aria-label="Sélectionner un fichier JSON">
+        <button class="btn btn-secondary" id="btn-report"><i class="bi bi-file-text"></i> Rapport Markdown</button>
+        <input type="file" id="import-input" accept=".json,.enc.json" style="display:none" aria-label="Sélectionner un fichier JSON">
       </div>
     </div>`;
 
-  // Tags
   const tagList = document.getElementById('tag-list');
   if(tagList) {
     tagList.innerHTML = tags.map(t=>`<span style="display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:4px 10px;font-size:12px">
@@ -1094,7 +1333,8 @@ function renderData(el) {
   }
   on('btn-add-tag','click', addTag);
   on('new-tag-input','keydown', e => { if(e.key==='Enter') addTag(); });
-  on('btn-export','click', exportJSON);
+  on('btn-export','click', () => exportJSON(false));
+  on('btn-export-enc','click', () => exportJSON(true));
   on('btn-import','click', () => document.getElementById('import-input')?.click());
   on('import-input','change', importJSON);
   on('btn-report','click', openReport);
@@ -1193,6 +1433,18 @@ function renderEditorArea(note) {
     // Checklist
     const items = note.checklist||[];
     area.innerHTML = `
+      <div class="bulk-bar" id="bulk-bar" style="display:none" role="toolbar" aria-label="Actions groupées">
+        <span class="bulk-bar-count" id="bulk-count">0 sélectionnée(s)</span>
+        <select class="crit-select" id="bulk-crit" aria-label="Criticité groupée" style="flex-shrink:0">
+          <option value="" disabled selected>Criticité…</option>
+          <option value="">—</option>
+          ${CRITICITIES.map(c=>`<option value="${c}">${CRIT_LABELS[c]}</option>`).join('')}
+        </select>
+        <input class="date-input" type="date" id="bulk-start" title="Date de début groupée" aria-label="Date de début groupée" style="width:110px">
+        <input class="date-input" type="date" id="bulk-due" title="Date d'échéance groupée" aria-label="Date d'échéance groupée" style="width:110px">
+        <button class="btn btn-secondary" id="bulk-apply" style="font-size:12px;padding:4px 10px">Appliquer</button>
+        <button class="btn btn-ghost" id="bulk-clear" style="font-size:12px;padding:4px 8px" title="Désélectionner tout" aria-label="Désélectionner tout"><i class="bi bi-x-lg"></i></button>
+      </div>
       <div id="checklist-items">
         ${items.map(i => checklistItemHtml(i)).join('')}
       </div>
@@ -1200,6 +1452,48 @@ function renderEditorArea(note) {
         <input id="new-item-text" placeholder="Nouvelle tâche…" aria-label="Texte de la nouvelle tâche">
         <button id="btn-add-item" class="btn btn-secondary" style="font-size:12px;padding:5px 10px">Ajouter</button>
       </div>`;
+
+    function updateBulkBar() {
+      const checked = area.querySelectorAll('.item-select-cb:checked');
+      const bar = document.getElementById('bulk-bar');
+      const countEl = document.getElementById('bulk-count');
+      if(bar) bar.style.display = checked.length ? 'flex' : 'none';
+      if(countEl) countEl.textContent = `${checked.length} sélectionnée${checked.length>1?'s':''}`;
+      area.querySelectorAll('.checklist-item').forEach(row => {
+        const cb = row.querySelector('.item-select-cb');
+        row.classList.toggle('selected', cb?.checked||false);
+      });
+    }
+
+    area.querySelectorAll('.item-select-cb').forEach(cb => {
+      cb.addEventListener('change', updateBulkBar);
+    });
+    on('bulk-clear','click', () => {
+      area.querySelectorAll('.item-select-cb').forEach(cb => { cb.checked = false; });
+      updateBulkBar();
+    });
+    on('bulk-apply','click', () => {
+      const crit = document.getElementById('bulk-crit')?.value;
+      const start = document.getElementById('bulk-start')?.value;
+      const due = document.getElementById('bulk-due')?.value;
+      area.querySelectorAll('.item-select-cb:checked').forEach(cb => {
+        const iid = cb.dataset.iid;
+        const item = (note.checklist||[]).find(i=>i.id===iid); if(!item) return;
+        if(crit !== null && crit !== undefined && document.getElementById('bulk-crit')?.value !== '') {
+          // only update if user actually changed the select from disabled placeholder
+          const bcs = document.getElementById('bulk-crit');
+          if(bcs && bcs.selectedIndex > 0) item.criticity = crit;
+        }
+        if(start) { item.start_date = start; const inp = area.querySelector(`.date-input[data-iid="${iid}"][data-field="start_date"]`); if(inp) inp.value=start; }
+        if(due)   { item.due_date = due;     const inp = area.querySelector(`.date-input[data-iid="${iid}"][data-field="due_date"]`);   if(inp) inp.value=due;   }
+        // màj select criticité dans la ligne
+        const sel = area.querySelector(`.crit-select[data-iid="${iid}"]`);
+        const bcs2 = document.getElementById('bulk-crit');
+        if(sel && bcs2 && bcs2.selectedIndex > 0) sel.value = item.criticity||'';
+      });
+      showToast('Modifications appliquées');
+    });
+
     area.querySelectorAll('.task-check').forEach(btn => {
       btn.addEventListener('click', () => toggleItemInline(btn.dataset.iid, note));
     });
@@ -1224,10 +1518,12 @@ function checklistItemHtml(item) {
   const st = getStatus(item), cfg = STATUSES[st]||STATUSES[''];
   const critVal = item.criticity||'';
   return `<div class="checklist-item" data-iid="${item.id}">
+    <input type="checkbox" class="item-select-cb" data-iid="${item.id}" aria-label="Sélectionner cette tâche">
     <button class="task-check ${cfg.cls}" data-iid="${item.id}" title="${cfg.label}" aria-label="${cfg.label}">${cfg.sigil||''}</button>
     <span class="checklist-text${st==='done'?' done':''}">${item.text}</span>
     <select class="crit-select" data-iid="${item.id}" title="Criticité" aria-label="Criticité de la tâche" style="flex-shrink:0">
-      <option value="">—</option>
+      <option value="" disabled${!critVal?' selected':''}>Criticité…</option>
+      <option value=""${critVal===''?' selected':''}>—</option>
       ${CRITICITIES.map(c=>`<option value="${c}"${critVal===c?' selected':''}>${CRIT_LABELS[c]}</option>`).join('')}
     </select>
     <input class="date-input" type="date" data-iid="${item.id}" data-field="start_date" value="${item.start_date||''}" title="Date de début" aria-label="Date de début" style="width:110px">
@@ -1393,27 +1689,76 @@ async function deleteTag(tid) {
   render();
 }
 
+// ── Chiffrement AES-256-GCM ───────────────────────────
+async function deriveKey(password, salt) {
+  const enc = new TextEncoder();
+  const keyMat = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt, hash:'SHA-256', iterations:100000 },
+    keyMat, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+  );
+}
+async function encryptData(plaintext, password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv   = crypto.getRandomValues(new Uint8Array(12));
+  const key  = await deriveKey(password, salt);
+  const enc  = new TextEncoder();
+  const ct   = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, enc.encode(plaintext));
+  return JSON.stringify({
+    enc: btoa(String.fromCharCode(...new Uint8Array(ct))),
+    salt: btoa(String.fromCharCode(...salt)),
+    iv:   btoa(String.fromCharCode(...iv))
+  });
+}
+async function decryptData(payload, password) {
+  const { enc, salt, iv } = JSON.parse(payload);
+  const toBytes = b => new Uint8Array(atob(b).split('').map(c=>c.charCodeAt(0)));
+  const key = await deriveKey(password, toBytes(salt));
+  const pt  = await crypto.subtle.decrypt({ name:'AES-GCM', iv: toBytes(iv) }, key, toBytes(enc));
+  return new TextDecoder().decode(pt);
+}
+
 // ── Export / Import ───────────────────────────────────
-async function exportJSON() {
+async function exportJSON(encrypt=false) {
   const data = JSON.stringify({ notes, tags, version: APP_VERSION, exportedAt: new Date().toISOString() }, null, 2);
-  const blob = new Blob([data], {type:'application/json'});
+  let blob, filename;
+  if(encrypt) {
+    const pwd = prompt('Mot de passe pour chiffrer l\'export :');
+    if(!pwd) return;
+    const pwd2 = prompt('Confirmez le mot de passe :');
+    if(pwd !== pwd2) { showToast('Les mots de passe ne correspondent pas'); return; }
+    const encrypted = await encryptData(data, pwd);
+    blob = new Blob([encrypted], {type:'application/json'});
+    filename = `notes-export-${today()}.enc.json`;
+  } else {
+    blob = new Blob([data], {type:'application/json'});
+    filename = `notes-export-${today()}.json`;
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `notes-export-${today()}.json`;
+  a.href = url; a.download = filename;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
-  showToast('Export téléchargé');
+  showToast(encrypt ? 'Export chiffré téléchargé' : 'Export téléchargé');
 }
 
 async function importJSON(e) {
   const file = e.target.files?.[0]; if(!file) return;
   const text = await file.text();
   try {
-    const data = JSON.parse(text);
+    let data;
+    const isEncrypted = file.name.endsWith('.enc.json');
+    if(isEncrypted) {
+      const pwd = prompt('Mot de passe pour déchiffrer ce fichier :');
+      if(!pwd) return;
+      try { data = JSON.parse(await decryptData(text, pwd)); }
+      catch(e) { showToast('Mot de passe incorrect ou fichier corrompu'); return; }
+    } else {
+      data = JSON.parse(text);
+    }
     if(!data.notes || !Array.isArray(data.notes)) throw new Error('Format invalide');
     const nCount = data.notes.length, tCount = (data.tags||[]).length;
     if(!confirm(`Importer ${nCount} note${nCount>1?'s':''} et ${tCount} étiquette${tCount>1?'s':''} ?\n\nAttention : les données actuelles seront remplacées.`)) return;
-    // Clear stores
     for(const n of notes) await dbDelete('notes', n.id);
     for(const t of tags) await dbDelete('tags', t.id);
     notes = data.notes; tags = data.tags||[];
@@ -1431,46 +1776,135 @@ async function importJSON(e) {
 // ── Rapport ───────────────────────────────────────────
 function openReport() {
   const modal = document.getElementById('modal-report');
-  const body = document.getElementById('modal-report-body');
+  const body  = document.getElementById('modal-report-body');
   if(!modal || !body) return;
-  const allTasks = getAllTasks();
+
   const STATUSES_FILTER = ['doing','waiting','','done'];
-  const STATUS_LABELS = {'doing':'En cours','waiting':'En attente','':'Pas commencées','done':'Terminées'};
-  let selectedStatuses = new Set(STATUSES_FILTER);
+  const STATUS_LABELS   = {'doing':'En cours','waiting':'En attente','':'Pas commencées','done':'Terminées'};
+  const PERIODS = [
+    { value:'week',  label:'Cette semaine' },
+    { value:'2weeks',label:'2 semaines' },
+    { value:'month', label:'Ce mois' },
+    { value:'all',   label:'Tout' },
+  ];
+
+  let selStatuses = new Set(STATUSES_FILTER);
+  let selTags     = new Set();   // vide = toutes
+  let selCrits    = new Set();   // vide = toutes
+  let selPeriod   = 'week';
+
+  function periodRange(p) {
+    const now = new Date(); now.setHours(0,0,0,0);
+    const start = new Date(now);
+    if(p==='week')   { start.setDate(now.getDate()-now.getDay()+1); }
+    else if(p==='2weeks') { start.setDate(now.getDate()-13); }
+    else if(p==='month')  { start.setDate(1); }
+    else return null;
+    return { from: start.toISOString().slice(0,10), to: new Date(now.getTime()+86400000*6).toISOString().slice(0,10) };
+  }
 
   function renderReport() {
-    const filtered = allTasks.filter(t => selectedStatuses.has(getStatus(t)));
-    const markdown = ['# Rapport de tâches', `Date : ${new Date().toLocaleDateString('fr-FR')}`, ''];
-    STATUSES_FILTER.forEach(s => {
-      if(!selectedStatuses.has(s)) return;
-      const group = filtered.filter(t => getStatus(t)===s).sort((a,b)=>(CRIT_ORDER[a.criticity||'faible']||3)-(CRIT_ORDER[b.criticity||'faible']||3));
-      if(!group.length) return;
-      markdown.push(`## ${STATUS_LABELS[s]}`);
-      group.forEach(t => { markdown.push(`- [${CRIT_LABELS[t.criticity||'faible']}] ${t.text} (${t.noteTitle})`); });
-      markdown.push('');
+    const range  = periodRange(selPeriod);
+    const allT   = getAllTasks();
+    const filtered = allT.filter(t => {
+      if(!selStatuses.has(getStatus(t))) return false;
+      if(selTags.size) {
+        const noteTags = notes.find(n=>n.id===t.noteId)?.tags||[];
+        if(!noteTags.some(tid=>selTags.has(tid))) return false;
+      }
+      if(selCrits.size && !selCrits.has(t.criticity||'faible')) return false;
+      if(range) {
+        const d = t.due_date||t.start_date;
+        if(d && (d < range.from || d > range.to)) return false;
+      }
+      return true;
     });
-    document.getElementById('report-output').textContent = markdown.join('\n');
+
+    const periodLabel = PERIODS.find(p=>p.value===selPeriod)?.label || '';
+    const tagLabel    = selTags.size  ? [...selTags].map(tid=>tags.find(t=>t.id===tid)?.name||'').join(', ')  : 'toutes';
+    const critLabel   = selCrits.size ? [...selCrits].map(c=>CRIT_LABELS[c]||c).join(', ') : 'toutes';
+
+    const md = [
+      `# Rapport de tâches`,
+      `Date : ${new Date().toLocaleDateString('fr-FR')}`,
+      `Période : ${periodLabel} | Étiquettes : ${tagLabel} | Criticité : ${critLabel}`,
+      `Total : ${filtered.length} tâche${filtered.length>1?'s':''}`,
+      '',
+    ];
+    STATUSES_FILTER.forEach(s => {
+      if(!selStatuses.has(s)) return;
+      const grp = filtered.filter(t=>getStatus(t)===s)
+        .sort((a,b)=>(CRIT_ORDER[a.criticity||'faible']||3)-(CRIT_ORDER[b.criticity||'faible']||3));
+      if(!grp.length) return;
+      md.push(`## ${STATUS_LABELS[s]} (${grp.length})`);
+      grp.forEach(t => md.push(`- [${CRIT_LABELS[t.criticity||'faible']}] ${t.text} (${t.noteTitle})`));
+      md.push('');
+    });
+    document.getElementById('report-output').textContent = md.join('\n');
   }
+
+  const tagCheckboxes = tags.map(t =>
+    `<label style="display:flex;align-items:center;gap:5px;font-size:12px">
+      <input type="checkbox" class="rep-tag-cb" data-tid="${t.id}" aria-label="${t.name}"> ${t.name}
+    </label>`).join('');
+  const critCheckboxes = ['critique','elevee','moyenne','faible'].map(c =>
+    `<label style="display:flex;align-items:center;gap:5px;font-size:12px">
+      <input type="checkbox" class="rep-crit-cb" data-crit="${c}" aria-label="${CRIT_LABELS[c]}"> ${CRIT_LABELS[c]}
+    </label>`).join('');
 
   body.innerHTML = `
     <div class="report-step">
-      <h3>Statuts à inclure</h3>
+      <h3>Période</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${PERIODS.map(p=>`<button class="filter-pill${selPeriod===p.value?' active':''}" data-period="${p.value}">${p.label}</button>`).join('')}
+      </div>
+    </div>
+    <div class="report-step">
+      <h3>Statuts</h3>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${STATUSES_FILTER.map(s=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px">
-          <input type="checkbox" checked data-rstatus="${s}" class="rstat-cb" aria-label="${STATUS_LABELS[s]}"> ${STATUS_LABELS[s]}
+        ${STATUSES_FILTER.map(s=>`<label style="display:flex;align-items:center;gap:5px;font-size:12px">
+          <input type="checkbox" checked class="rep-stat-cb" data-status="${s}" aria-label="${STATUS_LABELS[s]}"> ${STATUS_LABELS[s]}
         </label>`).join('')}
       </div>
+    </div>
+    ${tags.length ? `<div class="report-step">
+      <h3>Étiquettes <span style="font-weight:400;color:var(--text3)">(vide = toutes)</span></h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${tagCheckboxes}</div>
+    </div>` : ''}
+    <div class="report-step">
+      <h3>Criticité <span style="font-weight:400;color:var(--text3)">(vide = toutes)</span></h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${critCheckboxes}</div>
     </div>
     <div class="report-step">
       <h3>Rapport</h3>
       <pre class="report-output" id="report-output"></pre>
-      <button class="btn btn-secondary" id="btn-copy-report" style="margin-top:8px">Copier</button>
+      <button class="btn btn-secondary" id="btn-copy-report" style="margin-top:8px"><i class="bi bi-clipboard"></i> Copier</button>
     </div>`;
 
   renderReport();
-  body.querySelectorAll('.rstat-cb').forEach(cb => {
+
+  body.querySelectorAll('[data-period]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selPeriod = btn.dataset.period;
+      body.querySelectorAll('[data-period]').forEach(b => b.classList.toggle('active', b.dataset.period===selPeriod));
+      renderReport();
+    });
+  });
+  body.querySelectorAll('.rep-stat-cb').forEach(cb => {
     cb.addEventListener('change', () => {
-      if(cb.checked) selectedStatuses.add(cb.dataset.rstatus); else selectedStatuses.delete(cb.dataset.rstatus);
+      if(cb.checked) selStatuses.add(cb.dataset.status); else selStatuses.delete(cb.dataset.status);
+      renderReport();
+    });
+  });
+  body.querySelectorAll('.rep-tag-cb').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if(cb.checked) selTags.add(cb.dataset.tid); else selTags.delete(cb.dataset.tid);
+      renderReport();
+    });
+  });
+  body.querySelectorAll('.rep-crit-cb').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if(cb.checked) selCrits.add(cb.dataset.crit); else selCrits.delete(cb.dataset.crit);
       renderReport();
     });
   });
@@ -1491,6 +1925,25 @@ function applyTheme() {
 
 // ── Changelog ─────────────────────────────────────────
 const CHANGELOG = [
+  { version:'3.1.0', date:'2026-04-15', tag:'minor', entries:[
+    { icon:'✨', text:'Sélection multiple dans l\'éditeur de liste — cases à cocher, barre bulk-action pour appliquer criticité et dates en lot.' },
+    { icon:'✨', text:'Bandeau de filtres persistant (étiquettes, criticité, dates) affiché sous la nav sur tous les onglets concernés.' },
+    { icon:'✨', text:'Rapport Markdown enrichi — filtre par période, étiquettes et criticité (ex. bloquants RGAA cette semaine).' },
+    { icon:'✨', text:'Statistiques étendues — répartition des tâches par criticité et des notes par étiquette avec barres de progression.' },
+    { icon:'✨', text:'Export chiffré AES-256-GCM restauré dans l\'onglet Données.' },
+    { icon:'✨', text:'Matrice — filtre par étiquette et criticité en plus du filtre par quadrant.' },
+    { icon:'✨', text:'Footer : bouton "À supprimer ?" listant les listes dont toutes les tâches sont terminées avec proposition de purge.' },
+    { icon:'✨', text:'Footer : bouton Aide remplace l\'onglet Aide dans la nav.' },
+    { icon:'🔧', text:'Placeholder "Criticité…" sur le sélecteur de criticité dans l\'éditeur de liste.' },
+  ]},
+  { version:'3.0.1', date:'2026-04-15', tag:'patch', entries:[
+    { icon:'🐛', text:'Filtres étiquettes inactifs — events manquants sur les boutons tag-toggle, state activeTagFilters persisté.' },
+    { icon:'🐛', text:'Contraste insuffisant sur les cartes colorées — calcul dynamique W3C (luminance WCAG), texte blanc sur fonds sombres.' },
+    { icon:'🐛', text:'Filtre Matrice non conservé après interaction — state matrixFilter global, badges de filtre par quadrant ajoutés.' },
+    { icon:'🐛', text:'Scroll horizontal parasite dans la vue Matrices — min-width:0 sur la grille et les quadrants, overflow-x:hidden sur .content.' },
+    { icon:'✨', text:'Page Aide restituée avec documentation complète : statuts, criticité, dates, Gantt, Eisenhower, export.' },
+    { icon:'✨', text:'Footer permanent : avertissement stockage local visible sur toutes les vues.' },
+  ]},
   { version:'3.0.0', date:'2026-04-14', tag:'major', entries:[
     { icon:'✨', text:'P1-1 — contexte note/étiquette dans la vue Matrices avec navigation vers la note source.' },
     { icon:'✨', text:'P1-2 — onglet Tâches refondu : layout 2 colonnes, filtre par criticité, météo d\'activité dynamique.' },
@@ -1581,6 +2034,9 @@ on('btn-update-dismiss','click', () => {
   document.getElementById('update-banner')?.classList.remove('visible');
 });
 on('btn-update-save','click', async () => { await exportJSON(); showToast('Sauvegarde effectuée — rechargement…'); setTimeout(()=>location.reload(true),1800); });
+
+on('btn-purge','click', openPurge);
+on('btn-help-footer','click', () => { currentTab = 'help'; document.querySelectorAll('.nav-tab').forEach(t=>{ t.classList.remove('active'); t.setAttribute('aria-selected','false'); }); render(); });
 
 // Onglets
 ['notes','tasks','matrix','date','data','help'].forEach(tab => {
