@@ -535,7 +535,8 @@ function renderFilterBar() {
   const showCrit = ['tasks','matrix','date'].includes(tab);
   const showDate = tab === 'date';
 
-  if(!showTags && !showCrit && !showDate) { bar.innerHTML = ''; return; }
+  if(!showTags && !showCrit && !showDate) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
+  bar.style.display = '';
 
   let html = '';
   if(showTags && tags.length) {
