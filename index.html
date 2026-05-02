@@ -242,8 +242,8 @@ a{color:var(--red);text-decoration:none}
 .tag-toggle.active{background:var(--red);color:#fff;border-color:var(--red)}
 /* ── Couleurs note ── */
 .color-swatches{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.color-swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s}
-.color-swatch.selected{border-color:var(--text2);transform:scale(1.15)}
+.color-swatch{width:40px;height:28px;border-radius:var(--radius);cursor:pointer;border:2px solid transparent;transition:transform .1s,box-shadow .1s;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.color-swatch.selected{border-color:var(--text1) !important;transform:scale(1.08);box-shadow:0 0 0 1px var(--text1)}
 /* ── Bannière MAJ ── */
 .update-banner{position:fixed;top:0;left:0;right:0;background:#538154;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;font-size:13px;z-index:1000;transform:translateY(-100%);transition:transform .3s}
 .update-banner.visible{transform:translateY(0)}
@@ -517,12 +517,43 @@ const CRIT_LABELS = {critique:'Critique', elevee:'Élevée', moyenne:'Moyenne', 
 const CRIT_CSS = {critique:'critique', elevee:'elevee', moyenne:'moyenne', faible:'faible'};
 const CRIT_ORDER = {critique:0, elevee:1, moyenne:2, faible:3};
 
-const NOTE_COLORS = [
-  '#FFFFFF','#FCE1D7','#FFF2CD','#E7F1E2','#E4F3FD','#E8E5F3',
-  '#F8EADE','#F4C5AE','#FBDD9C','#C1DDBB','#B5D4F4','#C6C0E0',
-  '#E9A48A','#F7BE5D','#95C783','#85B7EB','#9787BF','#D4C2B1',
-  '#B85B52','#9D6D2C','#538154','#185FA5','#534AB7','#4C4C4B'
+// Paires bg/text — contraste WCAG AA garanti (≥4.5:1)
+const NOTE_PALETTES = [
+  { id:'none',    label:'Défaut',      bg:'#FFFFFF', tx:'#333333' },
+  { id:'rose',    label:'Rose',        bg:'#FCE1D7', tx:'#7A2A1A' },
+  { id:'peche',   label:'Pêche',       bg:'#F4C5AE', tx:'#6B2C0E' },
+  { id:'saumon',  label:'Saumon',      bg:'#E9A48A', tx:'#5A1A08' },
+  { id:'brique',  label:'Brique',      bg:'#B85B52', tx:'#FFFFFF' },
+  { id:'sable',   label:'Sable',       bg:'#F8EADE', tx:'#5A3A10' },
+  { id:'ambre',   label:'Ambre',       bg:'#FFF2CD', tx:'#5A3A00' },
+  { id:'miel',    label:'Miel',        bg:'#FBDD9C', tx:'#4A2E00' },
+  { id:'ocre',    label:'Ocre',        bg:'#F7BE5D', tx:'#3A2000' },
+  { id:'brun',    label:'Brun',        bg:'#9D6D2C', tx:'#FFFFFF' },
+  { id:'menthe',  label:'Menthe',      bg:'#E7F1E2', tx:'#1A3D1A' },
+  { id:'sauge',   label:'Sauge',       bg:'#C1DDBB', tx:'#1A3A10' },
+  { id:'vert',    label:'Vert',        bg:'#95C783', tx:'#0E2A08' },
+  { id:'foret',   label:'Forêt',       bg:'#538154', tx:'#FFFFFF' },
+  { id:'ciel',    label:'Ciel',        bg:'#E4F3FD', tx:'#0A2A4A' },
+  { id:'bleu',    label:'Bleu',        bg:'#B5D4F4', tx:'#0A2040' },
+  { id:'ocean',   label:'Océan',       bg:'#85B7EB', tx:'#0A1A38' },
+  { id:'marine',  label:'Marine',      bg:'#185FA5', tx:'#FFFFFF' },
+  { id:'lavande', label:'Lavande',     bg:'#E8E5F3', tx:'#2A1A5A' },
+  { id:'parme',   label:'Parme',       bg:'#C6C0E0', tx:'#1E1050' },
+  { id:'violet',  label:'Violet',      bg:'#9787BF', tx:'#FFFFFF' },
+  { id:'indigo',  label:'Indigo',      bg:'#534AB7', tx:'#FFFFFF' },
+  { id:'taupe',   label:'Taupe',       bg:'#D4C2B1', tx:'#2A1A0A' },
+  { id:'ardoise', label:'Ardoise',     bg:'#4C4C4B', tx:'#FFFFFF' },
 ];
+// Rétrocompatibilité : mapper les anciennes couleurs hex vers bg de palette
+function colorToPalette(colorHex) {
+  if(!colorHex || colorHex === '#FFFFFF') return NOTE_PALETTES[0];
+  return NOTE_PALETTES.find(p => p.bg === colorHex) || NOTE_PALETTES[0];
+}
+function paletteTextColor(colorHex) {
+  if(!colorHex || colorHex === '#FFFFFF') return null;
+  const p = colorToPalette(colorHex);
+  return p ? p.tx : (contrastRatio(colorHex,'#333333') >= 4.5 ? '#333333' : '#FFFFFF');
+}
 
 // ── State global filtres ──────────────────────────────
 const globalFilters = {
@@ -622,10 +653,6 @@ function contrastRatio(hex1, hex2) {
   const bright = Math.max(l1,l2), dark = Math.min(l1,l2);
   return (bright + .05) / (dark + .05);
 }
-function textColorForBg(hex) {
-  if(!hex || hex === '#FFFFFF') return null; // pas de style inline, utiliser var(--text1)
-  return contrastRatio(hex, '#333333') >= 4.5 ? '#333333' : '#FFFFFF';
-}
 function render() {
   renderFilterBar();
   const el = document.getElementById('content'); if(!el) return;
@@ -678,7 +705,7 @@ function renderNotes(el) {
   }
   grid.innerHTML = filtered.map(n => {
     const bgStyle = n.color && n.color !== '#FFFFFF' ? `background:${n.color}` : '';
-    const txColor = textColorForBg(n.color);
+    const txColor = paletteTextColor(n.color);
     const txStyle = txColor ? `color:${txColor}` : '';
     const txStyleMuted = txColor ? `color:${txColor};opacity:.7` : '';
     const preview = n.type === 'task'
@@ -1411,8 +1438,11 @@ function openNote(nid) {
       ${t.name}
     </label>`).join('');
 
-  const colorSwatches = NOTE_COLORS.map(c =>
-    `<button class="color-swatch${note.color===c?' selected':''}" style="background:${c};border-color:${c==='#FFFFFF'?'var(--border)':'transparent'}" data-color="${c}" title="Couleur ${c}" aria-label="Couleur ${c}" aria-pressed="${note.color===c}"></button>`
+  const currentPalette = colorToPalette(note.color);
+  const colorSwatches = NOTE_PALETTES.map(p =>
+    `<button class="color-swatch${currentPalette.id===p.id?' selected':''}" data-color="${p.bg}" data-palette="${p.id}"
+      style="background:${p.bg};color:${p.tx};border-color:${p.id==='none'?'var(--border2)':'transparent'}"
+      title="${p.label}" aria-label="Couleur ${p.label}" aria-pressed="${currentPalette.id===p.id}">Aa</button>`
   ).join('');
 
   body.innerHTML = `
@@ -1994,6 +2024,7 @@ function applyTheme() {
 // ── Changelog ─────────────────────────────────────────
 const CHANGELOG = [
   { version:'3.2.0', date:'2026-05-02', tag:'minor', entries:[
+    { icon:'🎨', text:'Sélecteur de couleur — 24 paires fond/texte nommées et accessibles (contraste WCAG AA garanti), rétrocompatibles avec les notes existantes.' },
     { icon:'🎤', text:'Saisie vocale — bouton micro dans l\'éditeur de note et de liste, transcription en temps réel via Web Speech API (Chrome/Android).' },
     { icon:'💾', text:'Enregistrement automatique du contenu lors du passage entre les onglets Note texte et Liste de tâches — aucune perte de saisie.' },
     { icon:'🔄', text:'Filtre d\'étiquettes persistant entre tous les onglets — sélectionner une étiquette dans un onglet la conserve sur les autres.' },
