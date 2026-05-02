@@ -9,6 +9,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Notes">
 <title>Notes</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@300;400;500;600;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -76,6 +78,8 @@ a{color:var(--red);text-decoration:none}
 .modal{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
 .modal-header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
 .modal-header h2{font-size:15px;font-weight:600;flex:1;color:var(--text1)}
+.modal-resize-handle{width:40px;height:4px;border-radius:2px;background:var(--border2);margin:8px auto 0;cursor:ns-resize;opacity:.7;flex-shrink:0}
+.modal-resize-handle:hover{opacity:1;background:var(--text3)}
 .modal-close{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text3)}
 .modal-close:hover{background:var(--surface3)}
 .modal-body{padding:16px;overflow-y:auto;flex:1}
@@ -308,7 +312,7 @@ a{color:var(--red);text-decoration:none}
 <div id="app">
   <div class="topbar">
     <div class="topbar-title">notes<span>.</span></div>
-    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.1.1</button>
+    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.2.0</button>
     <span class="topbar-sync" id="sync-status" aria-live="polite"></span>
     <button class="topbar-theme" id="btn-theme" aria-label="Basculer thème" title="Thème clair/sombre">
       <i class="bi bi-moon-fill" id="theme-icon"></i>
@@ -353,7 +357,8 @@ a{color:var(--red);text-decoration:none}
 
 <!-- Modal éditeur note -->
 <div class="modal-overlay" id="modal-note" role="dialog" aria-modal="true" aria-labelledby="modal-note-title">
-  <div class="modal" style="max-width:640px">
+  <div class="modal" style="max-width:640px" id="modal-note-inner">
+    <div class="modal-resize-handle" id="modal-note-handle" title="Redimensionner" aria-hidden="true"></div>
     <div class="modal-header">
       <h2 id="modal-note-title">Note</h2>
       <button class="modal-close" id="note-close" aria-label="Fermer"><i class="bi bi-x-lg"></i></button>
@@ -406,7 +411,7 @@ a{color:var(--red);text-decoration:none}
 
 <script>
 'use strict';
-const APP_VERSION = '3.1.1';
+const APP_VERSION = '3.2.0';
 const DB_NAME = 'notes-db', DB_VERSION = 2;
 let db, notes = [], tags = [], currentTab = 'notes';
 let editingNoteId = null;
@@ -1351,6 +1356,40 @@ function renderData(el) {
   on('btn-report','click', openReport);
 }
 
+// ── Saisie vocale ─────────────────────────────────────
+function attachVoice(btn, onResult) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return;
+  let recognition = null;
+  let active = false;
+  btn.addEventListener('click', () => {
+    if(active) {
+      recognition?.stop();
+      return;
+    }
+    recognition = new SR();
+    recognition.lang = 'fr-FR';
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    recognition.onstart = () => {
+      active = true;
+      btn.style.color = 'var(--red)';
+      btn.setAttribute('aria-pressed','true');
+    };
+    recognition.onresult = e => {
+      const transcript = e.results[0][0].transcript;
+      onResult(transcript);
+    };
+    recognition.onerror = () => {};
+    recognition.onend = () => {
+      active = false;
+      btn.style.color = '';
+      btn.setAttribute('aria-pressed','false');
+    };
+    recognition.start();
+  });
+}
+
 // ── Éditeur de note ───────────────────────────────────
 function openNote(nid) {
   const isNew = !nid;
@@ -1406,6 +1445,13 @@ function openNote(nid) {
   body.querySelectorAll('.type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const t = btn.dataset.type;
+      if(t === note.type) return; // pas de changement
+      // Sauvegarder le contenu courant avant de switcher
+      if(note.type === 'note') {
+        const contentEl = document.getElementById('note-content');
+        if(contentEl) note.content = contentEl.innerHTML;
+      }
+      // Le checklist est déjà muté en temps réel via toggleItemInline/addItemInline
       note.type = t;
       body.querySelectorAll('.type-btn').forEach(b => { b.classList.remove('btn-primary'); b.classList.add('btn-secondary'); });
       btn.classList.remove('btn-secondary'); btn.classList.add('btn-primary');
@@ -1424,13 +1470,17 @@ function renderEditorArea(note) {
           <button class="toolbar-btn" data-cmd="strikeThrough" title="Barré" aria-label="Barré"><s>S</s></button>
           <button class="toolbar-btn" data-cmd="insertUnorderedList" title="Liste" aria-label="Liste à puces">• —</button>
           <button class="toolbar-btn" data-cmd="insertOrderedList" title="Liste numérotée" aria-label="Liste numérotée">1.</button>
+          ${('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) ? '<button class="toolbar-btn" id="btn-voice-note" title="Saisie vocale" aria-label="Saisie vocale" aria-pressed="false"><i class="bi bi-mic"></i></button>' : ''}
         </div>
         <div class="editor-content" id="note-content" contenteditable="true" data-placeholder="Contenu de la note…" aria-multiline="true" aria-label="Contenu de la note">${note.content||''}</div>
       </div>`;
     const contentEl = document.getElementById('note-content');
-    area.querySelectorAll('.toolbar-btn').forEach(btn => {
+    area.querySelectorAll('.toolbar-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('click', () => { document.execCommand(btn.dataset.cmd, false, null); contentEl?.focus(); });
     });
+    // Saisie vocale note texte
+    const voiceBtn = document.getElementById('btn-voice-note');
+    if(voiceBtn) attachVoice(voiceBtn, text => { document.execCommand('insertText', false, text + ' '); });
     // Raccourci ----
     contentEl?.addEventListener('keyup', e => {
       const sel = window.getSelection(); if(!sel.rangeCount) return;
@@ -1461,6 +1511,7 @@ function renderEditorArea(note) {
       </div>
       <div class="checklist-add">
         <input id="new-item-text" placeholder="Nouvelle tâche…" aria-label="Texte de la nouvelle tâche">
+        ${('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) ? '<button class="toolbar-btn" id="btn-voice-list" title="Saisie vocale" aria-label="Saisie vocale" aria-pressed="false" style="flex-shrink:0"><i class="bi bi-mic"></i></button>' : ''}
         <button id="btn-add-item" class="btn btn-secondary" style="font-size:12px;padding:5px 10px">Ajouter</button>
       </div>`;
 
@@ -1522,6 +1573,12 @@ function renderEditorArea(note) {
     });
     on('btn-add-item','click', () => addItemInline(note));
     on('new-item-text','keydown', e => { if(e.key==='Enter') addItemInline(note); });
+    // Saisie vocale checklist
+    const voiceListBtn = document.getElementById('btn-voice-list');
+    if(voiceListBtn) attachVoice(voiceListBtn, text => {
+      const inp = document.getElementById('new-item-text');
+      if(inp) { inp.value = (inp.value + ' ' + text).trim(); inp.focus(); }
+    });
   }
 }
 
@@ -1936,6 +1993,13 @@ function applyTheme() {
 
 // ── Changelog ─────────────────────────────────────────
 const CHANGELOG = [
+  { version:'3.2.0', date:'2026-05-02', tag:'minor', entries:[
+    { icon:'🎤', text:'Saisie vocale — bouton micro dans l\'éditeur de note et de liste, transcription en temps réel via Web Speech API (Chrome/Android).' },
+    { icon:'💾', text:'Enregistrement automatique du contenu lors du passage entre les onglets Note texte et Liste de tâches — aucune perte de saisie.' },
+    { icon:'🔄', text:'Filtre d\'étiquettes persistant entre tous les onglets — sélectionner une étiquette dans un onglet la conserve sur les autres.' },
+    { icon:'📐', text:'Modale redimensionnable — glisser le trait en haut de la fiche de saisie pour ajuster la hauteur.' },
+    { icon:'📱', text:'Icône PWA variante sombre — manifest.json + icône 192/512 px pour l\'installation sur Android et PC.' },
+  ]},
   { version:'3.1.1', date:'2026-04-15', tag:'patch', entries:[
     { icon:'✨', text:'Modale "À supprimer ?" — bouton Voir sur chaque note pour vérifier le contenu avant suppression.' },
     { icon:'🎨', text:'Onglet Notes — étiquettes retirées du bandeau de filtres global (redondant avec les filtres sous la recherche).' },
@@ -2039,6 +2103,43 @@ async function init() {
 }
 
 // ── Events globaux ────────────────────────────────────
+// ── Redimensionnement modale note ─────────────────────
+(function() {
+  const handle = document.getElementById('modal-note-handle');
+  const modal  = document.getElementById('modal-note-inner');
+  if(!handle || !modal) return;
+  let startY = 0, startH = 0, dragging = false;
+  handle.addEventListener('mousedown', e => {
+    dragging = true;
+    startY = e.clientY;
+    startH = modal.offsetHeight;
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+  handle.addEventListener('touchstart', e => {
+    dragging = true;
+    startY = e.touches[0].clientY;
+    startH = modal.offsetHeight;
+    e.preventDefault();
+  }, { passive: false });
+  window.addEventListener('mousemove', e => {
+    if(!dragging) return;
+    const dy = startY - e.clientY; // tirer vers le haut = agrandir
+    const newH = Math.min(Math.max(startH + dy, 300), window.innerHeight * 0.95);
+    modal.style.maxHeight = newH + 'px';
+    modal.style.height = newH + 'px';
+  });
+  window.addEventListener('touchmove', e => {
+    if(!dragging) return;
+    const dy = startY - e.touches[0].clientY;
+    const newH = Math.min(Math.max(startH + dy, 300), window.innerHeight * 0.95);
+    modal.style.maxHeight = newH + 'px';
+    modal.style.height = newH + 'px';
+  });
+  window.addEventListener('mouseup', () => { dragging = false; document.body.style.userSelect = ''; });
+  window.addEventListener('touchend', () => { dragging = false; });
+})();
+
 on('fab-add','click', () => openNote(null));
 on('note-save','click', saveNote);
 on('note-delete','click', deleteNote);
