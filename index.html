@@ -729,19 +729,20 @@ function renderNotes(el) {
   });
   on('search-notes','input', e => {
     const val = e.target.value;
-    // Seuil : déclencher uniquement si vide (reset) ou 3 caractères minimum
-    if(val.length === 0 || val.length >= 3) {
+    if(val.length === 0) {
+      // Réinitialisation immédiate
+      clearTimeout(window._searchDebounce);
+      notesSearchTerm = '';
+      render();
+      const el = document.getElementById('search-notes');
+      if(el) el.focus();
+    } else if(val.length >= 3) {
       clearTimeout(window._searchDebounce);
       window._searchDebounce = setTimeout(() => {
         notesSearchTerm = val;
-        const focused = document.activeElement;
-        const wasFocused = focused && focused.id === 'search-notes';
         render();
-        // Restaurer le focus et la position du curseur après render
-        if(wasFocused) {
-          const el = document.getElementById('search-notes');
-          if(el) { el.focus(); el.setSelectionRange(val.length, val.length); }
-        }
+        const el = document.getElementById('search-notes');
+        if(el) { el.focus(); el.setSelectionRange(val.length, val.length); }
       }, 120);
     }
   });
