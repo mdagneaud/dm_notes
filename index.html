@@ -186,6 +186,8 @@ a{color:var(--red);text-decoration:none}
 .task-context:hover .task-context__arrow{opacity:1;transform:translateX(2px)}
 /* ── Matrices view ── */
 .matrix-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0;width:100%}
+.matrix-filters{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px 14px}
+.matrix-filter-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .matrix-quadrant{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;min-width:0;overflow:hidden}
 .matrix-quadrant h3{font-size:12px;font-weight:600;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
 .matrix-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;min-width:0;overflow:hidden}
@@ -567,8 +569,8 @@ function renderFilterBar() {
   const bar = document.getElementById('global-filter-bar');
   if(!bar) return;
   const tab = currentTab;
-  const showTags = ['tasks','matrix','date'].includes(tab);
-  const showCrit = ['tasks','matrix','date'].includes(tab);
+  const showTags = ['tasks','date'].includes(tab);
+  const showCrit = ['tasks','date'].includes(tab);
   const showDate = tab === 'date';
 
   if(!showTags && !showCrit && !showDate) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
@@ -906,22 +908,28 @@ function renderMatrix(el) {
   const allTasks = getAllTasks().filter(t => getStatus(t) !== 'done');
 
   el.innerHTML = `
-    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px" role="group" aria-label="Filtres Matrices">
-      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">Quadrants</span>
-      ${Q_ORDER.map(q => {
-        const qcfg = QUADRANTS[q], active = matrixFilter.has(q);
-        return `<button class="prio-badge ${q}" data-qfilter="${q}"
-          style="padding:4px 12px;width:auto;height:auto;font-size:12px;font-weight:600;opacity:${active?'1':'.4'};border:2px solid ${active?'currentColor':'transparent'}"
-          aria-pressed="${active}">${qcfg.sigil} ${qcfg.label}</button>`;
-      }).join('')}
-      ${tags.length ? `<span class="filter-bar-sep"></span>
-      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">Étiquettes</span>
-      ${tags.map(t=>`<button class="filter-pill${matrixExtraFilters.tags.has(t.id)?' active':''}" data-mftag="${t.id}">${t.name}</button>`).join('')}` : ''}
-      <span class="filter-bar-sep"></span>
-      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">Criticité</span>
-      ${['critique','elevee','moyenne','faible'].map(c=>
-        `<button class="filter-pill${matrixExtraFilters.crits.has(c)?' active':''}" data-mfcrit="${c}">${CRIT_LABELS[c]}</button>`
-      ).join('')}
+    <div class="matrix-filters" role="group" aria-label="Filtres Matrices">
+      <div class="matrix-filter-row">
+        <span class="filter-bar-label">Quadrants</span>
+        ${Q_ORDER.map(q => {
+          const qcfg = QUADRANTS[q], active = matrixFilter.has(q);
+          return `<button class="prio-badge ${q}" data-qfilter="${q}"
+            style="padding:4px 12px;width:auto;height:auto;font-size:12px;font-weight:600;opacity:${active?'1':'.4'};border:2px solid ${active?'currentColor':'transparent'}"
+            aria-pressed="${active}">${qcfg.sigil} ${qcfg.label}</button>`;
+        }).join('')}
+      </div>
+      <div class="matrix-filter-row">
+        <span class="filter-bar-label">Criticité</span>
+        ${['critique','elevee','moyenne','faible'].map(c=>
+          `<button class="filter-pill${matrixExtraFilters.crits.has(c)?' active':''}" data-mfcrit="${c}">${CRIT_LABELS[c]}</button>`
+        ).join('')}
+      </div>
+      ${tags.length ? `<div class="matrix-filter-row">
+        <span class="filter-bar-label">Étiquettes</span>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">
+          ${tags.map(t=>`<button class="filter-pill${matrixExtraFilters.tags.has(t.id)?' active':''}" data-mftag="${t.id}">${t.name}</button>`).join('')}
+        </div>
+      </div>` : ''}
     </div>
     <div class="matrix-grid" id="matrix-quadrants"></div>`;
 
