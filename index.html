@@ -314,7 +314,7 @@ a{color:var(--red);text-decoration:none}
 <div id="app">
   <div class="topbar">
     <div class="topbar-title">notes<span>.</span></div>
-    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.2.0</button>
+    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.2.1</button>
     <span class="topbar-sync" id="sync-status" aria-live="polite"></span>
     <button class="topbar-theme" id="btn-theme" aria-label="Basculer thème" title="Thème clair/sombre">
       <i class="bi bi-moon-fill" id="theme-icon"></i>
@@ -413,7 +413,7 @@ a{color:var(--red);text-decoration:none}
 
 <script>
 'use strict';
-const APP_VERSION = '3.2.0';
+const APP_VERSION = '3.2.1';
 const DB_NAME = 'notes-db', DB_VERSION = 2;
 let db, notes = [], tags = [], currentTab = 'notes';
 let editingNoteId = null;
@@ -2055,6 +2055,9 @@ function applyTheme() {
 
 // ── Changelog ─────────────────────────────────────────
 const CHANGELOG = [
+  { version:'3.2.1', date:'2026-05-21', tag:'patch', entries:[
+    { icon:'🐛', text:'Export chiffré — correction d\'un bug silencieux qui empêchait la génération du fichier .enc.json (remplacement du spread operator par une boucle pour la conversion base64).' },
+  ]},
   { version:'3.2.0', date:'2026-05-02', tag:'minor', entries:[
     { icon:'🎨', text:'Sélecteur de couleur — 24 paires fond/texte nommées et accessibles (contraste WCAG AA garanti), rétrocompatibles avec les notes existantes.' },
     { icon:'🎤', text:'Saisie vocale — bouton micro dans l\'éditeur de note et de liste, transcription en temps réel via Web Speech API (Chrome/Android).' },
