@@ -314,7 +314,7 @@ a{color:var(--red);text-decoration:none}
 <div id="app">
   <div class="topbar">
     <div class="topbar-title">notes<span>.</span></div>
-    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.2.1</button>
+    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.2.2</button>
     <span class="topbar-sync" id="sync-status" aria-live="polite"></span>
     <button class="topbar-theme" id="btn-theme" aria-label="Basculer thème" title="Thème clair/sombre">
       <i class="bi bi-moon-fill" id="theme-icon"></i>
@@ -385,6 +385,37 @@ a{color:var(--red);text-decoration:none}
   </div>
 </div>
 
+<!-- Modal mot de passe export chiffré -->
+<div class="modal-overlay" id="modal-pwd" role="dialog" aria-modal="true" aria-labelledby="modal-pwd-title">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h2 id="modal-pwd-title"><i class="bi bi-lock" style="margin-right:6px"></i>Exporter chiffré</h2>
+      <button class="modal-close" id="pwd-close" aria-label="Fermer"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:14px">
+        <label style="font-size:13px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px" for="pwd-input">Mot de passe</label>
+        <div style="position:relative;display:flex;align-items:center">
+          <input class="input-field" type="password" id="pwd-input" placeholder="Mot de passe…" style="padding-right:38px" autocomplete="new-password">
+          <button type="button" id="pwd-toggle" style="position:absolute;right:8px;color:var(--text3);font-size:16px;line-height:1" aria-label="Afficher/masquer le mot de passe"><i class="bi bi-eye"></i></button>
+        </div>
+      </div>
+      <div style="margin-bottom:6px">
+        <label style="font-size:13px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px" for="pwd-confirm">Confirmer le mot de passe</label>
+        <div style="position:relative;display:flex;align-items:center">
+          <input class="input-field" type="password" id="pwd-confirm" placeholder="Confirmation…" style="padding-right:38px" autocomplete="new-password">
+          <button type="button" id="pwd-confirm-toggle" style="position:absolute;right:8px;color:var(--text3);font-size:16px;line-height:1" aria-label="Afficher/masquer la confirmation"><i class="bi bi-eye"></i></button>
+        </div>
+      </div>
+      <div id="pwd-error" style="font-size:12px;color:var(--c-crit-tx);min-height:18px;margin-top:6px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="pwd-cancel">Annuler</button>
+      <button class="btn btn-primary" id="pwd-ok"><i class="bi bi-lock"></i> Exporter</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal rapport -->
 <div class="modal-overlay" id="modal-report" role="dialog" aria-modal="true" aria-labelledby="modal-report-title">
   <div class="modal" style="max-width:640px">
@@ -413,7 +444,7 @@ a{color:var(--red);text-decoration:none}
 
 <script>
 'use strict';
-const APP_VERSION = '3.2.1';
+const APP_VERSION = '3.2.2';
 const DB_NAME = 'notes-db', DB_VERSION = 2;
 let db, notes = [], tags = [], currentTab = 'notes';
 let editingNoteId = null;
@@ -1843,15 +1874,53 @@ async function decryptData(payload, password) {
   return new TextDecoder().decode(pt);
 }
 
+// ── Modale mot de passe ───────────────────────────────
+function promptPassword() {
+  return new Promise(resolve => {
+    const overlay  = document.getElementById('modal-pwd');
+    const input    = document.getElementById('pwd-input');
+    const confirm  = document.getElementById('pwd-confirm');
+    const errorEl  = document.getElementById('pwd-error');
+
+    input.value = ''; confirm.value = ''; errorEl.textContent = '';
+    input.type = 'password'; confirm.type = 'password';
+    document.querySelector('#pwd-toggle i').className = 'bi bi-eye';
+    document.querySelector('#pwd-confirm-toggle i').className = 'bi bi-eye';
+    overlay.classList.add('open');
+    setTimeout(() => input.focus(), 50);
+
+    function close(val) { overlay.classList.remove('open'); resolve(val); }
+
+    function trySubmit() {
+      const pwd = input.value;
+      if(!pwd) { errorEl.textContent = 'Le mot de passe est requis.'; return; }
+      if(pwd !== confirm.value) { errorEl.textContent = 'Les mots de passe ne correspondent pas.'; return; }
+      close(pwd);
+    }
+
+    function toggleVis(field, btn) {
+      const show = field.type === 'password';
+      field.type = show ? 'text' : 'password';
+      btn.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+    }
+
+    document.getElementById('pwd-ok').onclick        = trySubmit;
+    document.getElementById('pwd-cancel').onclick    = () => close(null);
+    document.getElementById('pwd-close').onclick     = () => close(null);
+    document.getElementById('pwd-toggle').onclick    = () => toggleVis(input,   document.getElementById('pwd-toggle'));
+    document.getElementById('pwd-confirm-toggle').onclick = () => toggleVis(confirm, document.getElementById('pwd-confirm-toggle'));
+    input.onkeydown   = e => { if(e.key === 'Enter') { confirm.focus(); } };
+    confirm.onkeydown = e => { if(e.key === 'Enter') trySubmit(); };
+  });
+}
+
 // ── Export / Import ───────────────────────────────────
 async function exportJSON(encrypt=false) {
   const data = JSON.stringify({ notes, tags, version: APP_VERSION, exportedAt: new Date().toISOString() }, null, 2);
   let blob, filename;
   if(encrypt) {
-    const pwd = prompt('Mot de passe pour chiffrer l\'export :');
+    const pwd = await promptPassword();
     if(!pwd) return;
-    const pwd2 = prompt('Confirmez le mot de passe :');
-    if(pwd !== pwd2) { showToast('Les mots de passe ne correspondent pas'); return; }
     try {
       const encrypted = await encryptData(data, pwd);
       blob = new Blob([encrypted], {type:'application/json'});
@@ -2055,6 +2124,9 @@ function applyTheme() {
 
 // ── Changelog ─────────────────────────────────────────
 const CHANGELOG = [
+  { version:'3.2.2', date:'2026-05-21', tag:'patch', entries:[
+    { icon:'🔐', text:'Export chiffré — saisie du mot de passe dans une modale dédiée avec champ masqué (*) et bouton œil pour afficher/masquer.' },
+  ]},
   { version:'3.2.1', date:'2026-05-21', tag:'patch', entries:[
     { icon:'🐛', text:'Export chiffré — correction d\'un bug silencieux qui empêchait la génération du fichier .enc.json (remplacement du spread operator par une boucle pour la conversion base64).' },
   ]},
