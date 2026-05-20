@@ -1828,10 +1828,11 @@ async function encryptData(plaintext, password) {
   const key  = await deriveKey(password, salt);
   const enc  = new TextEncoder();
   const ct   = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, enc.encode(plaintext));
+  const toB64 = arr => { let s = ''; arr.forEach(b => s += String.fromCharCode(b)); return btoa(s); };
   return JSON.stringify({
-    enc: btoa(String.fromCharCode(...new Uint8Array(ct))),
-    salt: btoa(String.fromCharCode(...salt)),
-    iv:   btoa(String.fromCharCode(...iv))
+    enc: toB64(new Uint8Array(ct)),
+    salt: toB64(salt),
+    iv:   toB64(iv)
   });
 }
 async function decryptData(payload, password) {
@@ -1851,9 +1852,14 @@ async function exportJSON(encrypt=false) {
     if(!pwd) return;
     const pwd2 = prompt('Confirmez le mot de passe :');
     if(pwd !== pwd2) { showToast('Les mots de passe ne correspondent pas'); return; }
-    const encrypted = await encryptData(data, pwd);
-    blob = new Blob([encrypted], {type:'application/json'});
-    filename = `notes-export-${today()}.enc.json`;
+    try {
+      const encrypted = await encryptData(data, pwd);
+      blob = new Blob([encrypted], {type:'application/json'});
+      filename = `notes-export-${today()}.enc.json`;
+    } catch(e) {
+      showToast('Erreur lors du chiffrement');
+      return;
+    }
   } else {
     blob = new Blob([data], {type:'application/json'});
     filename = `notes-export-${today()}.json`;
