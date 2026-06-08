@@ -242,6 +242,7 @@ a{color:var(--red);text-decoration:none}
 .tags-row{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
 .tag-toggle{padding:4px 10px;border-radius:10px;font-size:12px;border:1px solid var(--border);color:var(--text2);transition:background .15s,color .15s}
 .tag-toggle.active{background:var(--red);color:#fff;border-color:var(--red)}
+.tag-toggle.exclude{background:var(--surface);color:var(--red-dark);border-color:var(--red-dark);text-decoration:line-through}
 /* ── Couleurs note ── */
 .color-swatches{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
 .color-swatch{width:40px;height:28px;border-radius:var(--radius);cursor:pointer;border:2px solid transparent;transition:transform .1s,box-shadow .1s;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
@@ -266,6 +267,7 @@ a{color:var(--red);text-decoration:none}
 .filter-bar-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);white-space:nowrap;margin-right:4px}
 .filter-pill{padding:3px 10px;border-radius:10px;font-size:12px;border:1px solid var(--border);color:var(--text2);background:var(--surface);transition:background .12s,color .12s,border-color .12s;white-space:nowrap}
 .filter-pill.active{background:var(--red);color:#fff;border-color:var(--red)}
+.filter-pill.exclude{background:var(--surface);color:var(--red-dark);border-color:var(--red-dark);text-decoration:line-through}
 .filter-pill-date{padding:3px 8px;border-radius:10px;font-size:12px;border:1px solid var(--border);color:var(--text2);background:var(--surface)}
 .filter-pill-date:focus{outline:2px solid var(--red);outline-offset:1px}
 .filter-bar-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;margin:0 4px}
@@ -314,7 +316,7 @@ a{color:var(--red);text-decoration:none}
 <div id="app">
   <div class="topbar">
     <div class="topbar-title">notes<span>.</span></div>
-    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.2.2</button>
+    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.3.0</button>
     <span class="topbar-sync" id="sync-status" aria-live="polite"></span>
     <button class="topbar-theme" id="btn-theme" aria-label="Basculer thème" title="Thème clair/sombre">
       <i class="bi bi-moon-fill" id="theme-icon"></i>
@@ -368,8 +370,7 @@ a{color:var(--red);text-decoration:none}
     <div class="modal-body" id="modal-note-body"></div>
     <div class="modal-footer">
       <button class="btn btn-danger btn-ghost" id="note-delete">Supprimer</button>
-      <button class="btn btn-secondary" id="note-cancel">Annuler</button>
-      <button class="btn btn-primary" id="note-save">Enregistrer</button>
+      <button class="btn btn-primary" id="note-save">Fermer</button>
     </div>
   </div>
 </div>
@@ -444,12 +445,14 @@ a{color:var(--red);text-decoration:none}
 
 <script>
 'use strict';
-const APP_VERSION = '3.2.2';
+const APP_VERSION = '3.3.0';
 const DB_NAME = 'notes-db', DB_VERSION = 2;
 let db, notes = [], tags = [], currentTab = 'notes';
 let editingNoteId = null;
+let editingNoteObj = null;     // référence de la note en cours d'édition (autosave)
+let editorSaveTimer = null;
 let notesSearchTerm = '';
-let activeTagFilters = new Set();
+let activeTagFilters = new Map(); // tagId -> 'include' | 'exclude'
 
 // ── Helpers ──────────────────────────────────────────
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
@@ -590,7 +593,7 @@ function paletteTextColor(colorHex) {
 
 // ── State global filtres ──────────────────────────────
 const globalFilters = {
-  tags: new Set(),       // étiquettes actives (vide = toutes)
+  tags: new Map(),       // tagId -> 'include' | 'exclude' (vide = toutes)
   criticities: new Set(), // criticités actives (vide = toutes)
   dateFrom: '',
   dateTo: '',
@@ -610,7 +613,13 @@ function renderFilterBar() {
   let html = '';
   if(showTags && tags.length) {
     html += `<span class="filter-bar-label">Étiquettes</span>`;
-    html += tags.map(t => `<button class="filter-pill${globalFilters.tags.has(t.id)?' active':''}" data-ftag="${t.id}">${t.name}</button>`).join('');
+    html += tags.map(t => {
+      const st = globalFilters.tags.get(t.id);
+      const cls = st === 'include' ? ' active' : st === 'exclude' ? ' exclude' : '';
+      const sigil = st === 'include' ? '✓ ' : st === 'exclude' ? '⊘ ' : '';
+      const aria = st === 'include' ? `Inclure l'étiquette ${t.name}` : st === 'exclude' ? `Exclure l'étiquette ${t.name}` : `Filtrer par l'étiquette ${t.name}`;
+      return `<button class="filter-pill${cls}" data-ftag="${t.id}" aria-pressed="${st?'true':'false'}" aria-label="${aria}"><span aria-hidden="true">${sigil}</span>${t.name}</button>`;
+    }).join('');
     if(showCrit) html += `<span class="filter-bar-sep"></span>`;
   }
   if(showCrit) {
@@ -630,8 +639,7 @@ function renderFilterBar() {
 
   bar.querySelectorAll('[data-ftag]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const tid = btn.dataset.ftag;
-      if(globalFilters.tags.has(tid)) globalFilters.tags.delete(tid); else globalFilters.tags.add(tid);
+      cycleTagFilter(globalFilters.tags, btn.dataset.ftag);
       render();
     });
   });
@@ -648,14 +656,32 @@ function renderFilterBar() {
   if(ft) ft.addEventListener('change', () => { globalFilters.dateTo = ft.value; render(); });
 }
 
+// Helper : cycle d'état d'une étiquette (neutre → inclure → exclure → neutre)
+function cycleTagFilter(map, tid) {
+  const st = map.get(tid);
+  if(!st) map.set(tid, 'include');
+  else if(st === 'include') map.set(tid, 'exclude');
+  else map.delete(tid);
+}
+// Helper : un jeu d'étiquettes satisfait-il une carte de filtres (inclusions/exclusions) ?
+function matchesTagMap(noteTags, map) {
+  if(!map || map.size === 0) return true;
+  const has = tid => (noteTags||[]).includes(tid);
+  const includes = [], excludes = [];
+  map.forEach((st, tid) => { (st === 'exclude' ? excludes : includes).push(tid); });
+  if(excludes.some(has)) return false;            // l'exclusion prime
+  if(includes.length && !includes.some(has)) return false;
+  return true;
+}
 // Helper : une note correspond-elle aux filtres globaux étiquettes ?
 function noteMatchesGlobalFilters(n) {
-  if(globalFilters.tags.size && !(n.tags||[]).some(tid => globalFilters.tags.has(tid))) return false;
+  if(!matchesTagMap(n.tags, globalFilters.tags)) return false;
   return true;
 }
 // Helper : une tâche correspond-elle aux filtres globaux ?
 function taskMatchesGlobalFilters(t) {
-  if(globalFilters.tags.size && !globalFilters.tags.has(t.tagId||'') && !(notes.find(n=>n.id===t.noteId)?.tags||[]).some(tid=>globalFilters.tags.has(tid))) return false;
+  const note = notes.find(n => n.id === t.noteId);
+  if(!matchesTagMap(note?.tags || [], globalFilters.tags)) return false;
   if(globalFilters.criticities.size && !globalFilters.criticities.has(t.criticity||'faible')) return false;
   return true;
 }
@@ -706,7 +732,7 @@ function renderNotes(el) {
       (n.content||'').toLowerCase().includes(search) ||
       (n.checklist||[]).some(i => i.text && i.text.toLowerCase().includes(search))
     )) return false;
-    if(activeTagFilters.size && !(n.tags||[]).some(tid => activeTagFilters.has(tid))) return false;
+    if(!matchesTagMap(n.tags, activeTagFilters)) return false;
     if(!noteMatchesGlobalFilters(n)) return false;
     return true;
   });
@@ -719,12 +745,16 @@ function renderNotes(el) {
   // Tags filtres
   const tf = document.getElementById('tag-filters');
   if(tf && tags.length) {
-    tf.innerHTML = tags.map(t=>`<button class="tag-toggle${activeTagFilters.has(t.id)?' active':''}" data-tid="${t.id}">${t.name}</button>`).join('');
+    tf.innerHTML = tags.map(t => {
+      const st = activeTagFilters.get(t.id);
+      const cls = st === 'include' ? ' active' : st === 'exclude' ? ' exclude' : '';
+      const sigil = st === 'include' ? '✓ ' : st === 'exclude' ? '⊘ ' : '';
+      const aria = st === 'include' ? `Inclure l'étiquette ${t.name}` : st === 'exclude' ? `Exclure l'étiquette ${t.name}` : `Filtrer par l'étiquette ${t.name}`;
+      return `<button class="tag-toggle${cls}" data-tid="${t.id}" aria-pressed="${st?'true':'false'}" aria-label="${aria}"><span aria-hidden="true">${sigil}</span>${t.name}</button>`;
+    }).join('');
     tf.querySelectorAll('.tag-toggle').forEach(btn => {
       btn.addEventListener('click', () => {
-        const tid = btn.dataset.tid;
-        if(activeTagFilters.has(tid)) activeTagFilters.delete(tid);
-        else activeTagFilters.add(tid);
+        cycleTagFilter(activeTagFilters, btn.dataset.tid);
         renderNotes(el);
       });
     });
@@ -741,15 +771,18 @@ function renderNotes(el) {
     const txColor = paletteTextColor(n.color);
     const txStyle = txColor ? `color:${txColor}` : '';
     const txStyleMuted = txColor ? `color:${txColor};opacity:.7` : '';
-    const preview = n.type === 'task'
-      ? (n.checklist||[]).map(i=>i.text).filter(Boolean).slice(0,3).join(' · ') || ''
-      : (n.content||'').replace(/<[^>]+>/g,'').slice(0,120);
+    const contentText = (n.content||'').replace(/<[^>]+>/g,'').trim();
+    const taskItems = (n.checklist||[]).filter(i=>!i.separator);
+    const doneCount = taskItems.filter(i=>getStatus(i)==='done').length;
+    let preview = contentText.slice(0,120);
+    if(!preview && taskItems.length) preview = taskItems.map(i=>i.text).filter(Boolean).slice(0,3).join(' · ');
     const noteTags = (n.tags||[]).map(tid => {
       const t = tags.find(x=>x.id===tid); return t ? `<span class="tag-chip">${t.name}</span>` : '';
     }).join('');
     return `<div class="note-card" style="${bgStyle}" data-nid="${n.id}" tabindex="0" role="button" aria-label="Ouvrir la note : ${n.title||'Sans titre'}">
       <div class="note-card__title" style="${txStyle}">${n.title||'Sans titre'}</div>
       <div class="note-card__preview" style="${txStyleMuted}">${preview||'<em>Vide</em>'}</div>
+      ${taskItems.length ? `<div style="${txStyleMuted};font-size:11px;margin-top:4px">${doneCount}/${taskItems.length} tâche${taskItems.length>1?'s':''}</div>` : ''}
       ${noteTags ? `<div class="note-card__tags">${noteTags}</div>` : ''}
     </div>`;
   }).join('');
@@ -897,8 +930,7 @@ function openPurge() {
   if(!modal || !body) return;
 
   const candidates = notes.filter(n =>
-    n.type === 'task' &&
-    (n.checklist||[]).length > 0 &&
+    (n.checklist||[]).filter(i=>!i.separator).length > 0 &&
     (n.checklist||[]).filter(i=>!i.separator).every(i => getStatus(i) === 'done')
   );
 
@@ -1482,6 +1514,7 @@ function openNote(nid) {
     : notes.find(n => n.id===nid);
   if(!note) return;
   editingNoteId = note.id;
+  editingNoteObj = note;
 
   const modal = document.getElementById('modal-note');
   const body = document.getElementById('modal-note-body');
@@ -1504,10 +1537,6 @@ function openNote(nid) {
 
   body.innerHTML = `
     <input class="input-field" id="note-title-input" value="${(note.title||'').replace(/"/g,'&quot;')}" placeholder="Titre (optionnel)" style="margin-bottom:12px" aria-label="Titre de la note">
-    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-      <button class="btn btn-secondary type-btn${note.type==='note'?' btn-primary':''}" data-type="note" style="font-size:12px;padding:4px 10px">Note texte</button>
-      <button class="btn btn-secondary type-btn${note.type==='task'?' btn-primary':''}" data-type="task" style="font-size:12px;padding:4px 10px">Liste de tâches</button>
-    </div>
     <div id="editor-area"></div>
     <div style="margin:12px 0">
       <div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:6px">Couleur</div>
@@ -1521,152 +1550,138 @@ function openNote(nid) {
   renderEditorArea(note);
   modal.classList.add('open');
 
+  // Titre : sauvegarde permanente
+  document.getElementById('note-title-input')?.addEventListener('input', scheduleEditorSave);
+
   // Couleurs
   body.querySelectorAll('.color-swatch').forEach(s => {
     s.addEventListener('click', () => {
       body.querySelectorAll('.color-swatch').forEach(x => { x.classList.remove('selected'); x.setAttribute('aria-pressed','false'); });
       s.classList.add('selected'); s.setAttribute('aria-pressed','true');
+      scheduleEditorSave();
     });
   });
-  // Type
-  body.querySelectorAll('.type-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const t = btn.dataset.type;
-      if(t === note.type) return; // pas de changement
-      // Sauvegarder le contenu courant avant de switcher
-      if(note.type === 'note') {
-        const contentEl = document.getElementById('note-content');
-        if(contentEl) note.content = contentEl.innerHTML;
-      }
-      // Le checklist est déjà muté en temps réel via toggleItemInline/addItemInline
-      note.type = t;
-      body.querySelectorAll('.type-btn').forEach(b => { b.classList.remove('btn-primary'); b.classList.add('btn-secondary'); });
-      btn.classList.remove('btn-secondary'); btn.classList.add('btn-primary');
-      renderEditorArea(note);
-    });
+
+  // Étiquettes : sauvegarde permanente
+  body.querySelectorAll('.tag-cb').forEach(cb => {
+    cb.addEventListener('change', scheduleEditorSave);
   });
 }
 
 function renderEditorArea(note) {
   const area = document.getElementById('editor-area'); if(!area) return;
-  if(note.type === 'note') {
-    area.innerHTML = `
-      <div class="editor-wrap">
-        <div class="editor-toolbar">
-          <button class="toolbar-btn" data-cmd="bold" title="Gras" aria-label="Gras"><b>G</b></button>
-          <button class="toolbar-btn" data-cmd="strikeThrough" title="Barré" aria-label="Barré"><s>S</s></button>
-          <button class="toolbar-btn" data-cmd="insertUnorderedList" title="Liste" aria-label="Liste à puces">• —</button>
-          <button class="toolbar-btn" data-cmd="insertOrderedList" title="Liste numérotée" aria-label="Liste numérotée">1.</button>
-          ${('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) ? '<button class="toolbar-btn" id="btn-voice-note" title="Saisie vocale" aria-label="Saisie vocale" aria-pressed="false"><i class="bi bi-mic"></i></button>' : ''}
-        </div>
-        <div class="editor-content" id="note-content" contenteditable="true" data-placeholder="Contenu de la note…" aria-multiline="true" aria-label="Contenu de la note">${note.content||''}</div>
-      </div>`;
-    const contentEl = document.getElementById('note-content');
-    area.querySelectorAll('.toolbar-btn[data-cmd]').forEach(btn => {
-      btn.addEventListener('click', () => { document.execCommand(btn.dataset.cmd, false, null); contentEl?.focus(); });
-    });
-    // Saisie vocale note texte
-    const voiceBtn = document.getElementById('btn-voice-note');
-    if(voiceBtn) attachVoice(voiceBtn, text => { document.execCommand('insertText', false, text + ' '); });
-    // Raccourci ----
-    contentEl?.addEventListener('keyup', e => {
-      const sel = window.getSelection(); if(!sel.rangeCount) return;
-      const node = sel.anchorNode; if(!node) return;
-      if(node.nodeType===3 && node.textContent.endsWith('----')) {
-        node.textContent = node.textContent.slice(0,-4);
-        document.execCommand('insertHTML', false, '<hr>');
-      }
-    });
-  } else {
-    // Checklist
-    const items = note.checklist||[];
-    area.innerHTML = `
-      <div class="bulk-bar" id="bulk-bar" style="display:none" role="toolbar" aria-label="Actions groupées">
-        <span class="bulk-bar-count" id="bulk-count">0 sélectionnée(s)</span>
-        <select class="crit-select" id="bulk-crit" aria-label="Criticité groupée" style="flex-shrink:0">
-          <option value="" disabled selected>Criticité…</option>
-          <option value="">—</option>
-          ${CRITICITIES.map(c=>`<option value="${c}">${CRIT_LABELS[c]}</option>`).join('')}
-        </select>
-        <input class="date-input" type="date" id="bulk-start" title="Date de début groupée" aria-label="Date de début groupée" style="width:110px">
-        <input class="date-input" type="date" id="bulk-due" title="Date d'échéance groupée" aria-label="Date d'échéance groupée" style="width:110px">
-        <button class="btn btn-secondary" id="bulk-apply" style="font-size:12px;padding:4px 10px">Appliquer</button>
-        <button class="btn btn-ghost" id="bulk-clear" style="font-size:12px;padding:4px 8px" title="Désélectionner tout" aria-label="Désélectionner tout"><i class="bi bi-x-lg"></i></button>
+  const items = note.checklist||[];
+  const voiceAvail = ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window);
+  area.innerHTML = `
+    <div class="editor-wrap">
+      <div class="editor-toolbar">
+        <button class="toolbar-btn" data-cmd="bold" title="Gras" aria-label="Gras"><b>G</b></button>
+        <button class="toolbar-btn" data-cmd="strikeThrough" title="Barré" aria-label="Barré"><s>S</s></button>
+        <button class="toolbar-btn" data-cmd="insertUnorderedList" title="Liste" aria-label="Liste à puces">• —</button>
+        <button class="toolbar-btn" data-cmd="insertOrderedList" title="Liste numérotée" aria-label="Liste numérotée">1.</button>
+        ${voiceAvail ? '<button class="toolbar-btn" id="btn-voice-note" title="Saisie vocale" aria-label="Saisie vocale" aria-pressed="false"><i class="bi bi-mic"></i></button>' : ''}
       </div>
-      <div id="checklist-items">
-        ${items.map(i => checklistItemHtml(i)).join('')}
-      </div>
-      <div class="checklist-add">
-        <input id="new-item-text" placeholder="Nouvelle tâche…" aria-label="Texte de la nouvelle tâche">
-        ${('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) ? '<button class="toolbar-btn" id="btn-voice-list" title="Saisie vocale" aria-label="Saisie vocale" aria-pressed="false" style="flex-shrink:0"><i class="bi bi-mic"></i></button>' : ''}
-        <button id="btn-add-item" class="btn btn-secondary" style="font-size:12px;padding:5px 10px">Ajouter</button>
-      </div>`;
+      <div class="editor-content" id="note-content" contenteditable="true" data-placeholder="Contenu de la note…" aria-multiline="true" aria-label="Contenu de la note">${note.content||''}</div>
+    </div>
+    <div style="border-top:1px solid var(--border);margin:16px 0 8px"></div>
+    <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">Tâches</div>
+    <div class="bulk-bar" id="bulk-bar" style="display:none" role="toolbar" aria-label="Actions groupées">
+      <span class="bulk-bar-count" id="bulk-count">0 sélectionnée(s)</span>
+      <select class="crit-select" id="bulk-crit" aria-label="Criticité groupée" style="flex-shrink:0">
+        <option value="" disabled selected>Criticité…</option>
+        <option value="">—</option>
+        ${CRITICITIES.map(c=>`<option value="${c}">${CRIT_LABELS[c]}</option>`).join('')}
+      </select>
+      <input class="date-input" type="date" id="bulk-start" title="Date de début groupée" aria-label="Date de début groupée" style="width:110px">
+      <input class="date-input" type="date" id="bulk-due" title="Date d'échéance groupée" aria-label="Date d'échéance groupée" style="width:110px">
+      <button class="btn btn-secondary" id="bulk-apply" style="font-size:12px;padding:4px 10px">Appliquer</button>
+      <button class="btn btn-ghost" id="bulk-clear" style="font-size:12px;padding:4px 8px" title="Désélectionner tout" aria-label="Désélectionner tout"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div id="checklist-items">
+      ${items.map(i => checklistItemHtml(i)).join('')}
+    </div>
+    <div class="checklist-add">
+      <input id="new-item-text" placeholder="Nouvelle tâche…" aria-label="Texte de la nouvelle tâche">
+      ${voiceAvail ? '<button class="toolbar-btn" id="btn-voice-list" title="Saisie vocale" aria-label="Saisie vocale" aria-pressed="false" style="flex-shrink:0"><i class="bi bi-mic"></i></button>' : ''}
+      <button id="btn-add-item" class="btn btn-secondary" style="font-size:12px;padding:5px 10px">Ajouter</button>
+    </div>`;
 
-    function updateBulkBar() {
-      const checked = area.querySelectorAll('.item-select-cb:checked');
-      const bar = document.getElementById('bulk-bar');
-      const countEl = document.getElementById('bulk-count');
-      if(bar) bar.style.display = checked.length ? 'flex' : 'none';
-      if(countEl) countEl.textContent = `${checked.length} sélectionnée${checked.length>1?'s':''}`;
-      area.querySelectorAll('.checklist-item').forEach(row => {
-        const cb = row.querySelector('.item-select-cb');
-        row.classList.toggle('selected', cb?.checked||false);
-      });
+  // ── Contenu texte ──
+  const contentEl = document.getElementById('note-content');
+  area.querySelectorAll('.toolbar-btn[data-cmd]').forEach(btn => {
+    btn.addEventListener('click', () => { document.execCommand(btn.dataset.cmd, false, null); contentEl?.focus(); scheduleEditorSave(); });
+  });
+  const voiceBtn = document.getElementById('btn-voice-note');
+  if(voiceBtn) attachVoice(voiceBtn, text => { document.execCommand('insertText', false, text + ' '); scheduleEditorSave(); });
+  contentEl?.addEventListener('input', scheduleEditorSave);
+  contentEl?.addEventListener('keyup', e => {
+    const sel = window.getSelection(); if(!sel.rangeCount) return;
+    const node = sel.anchorNode; if(!node) return;
+    if(node.nodeType===3 && node.textContent.endsWith('----')) {
+      node.textContent = node.textContent.slice(0,-4);
+      document.execCommand('insertHTML', false, '<hr>');
     }
+  });
 
-    area.querySelectorAll('.item-select-cb').forEach(cb => {
-      cb.addEventListener('change', updateBulkBar);
-    });
-    on('bulk-clear','click', () => {
-      area.querySelectorAll('.item-select-cb').forEach(cb => { cb.checked = false; });
-      updateBulkBar();
-    });
-    on('bulk-apply','click', () => {
-      const crit = document.getElementById('bulk-crit')?.value;
-      const start = document.getElementById('bulk-start')?.value;
-      const due = document.getElementById('bulk-due')?.value;
-      area.querySelectorAll('.item-select-cb:checked').forEach(cb => {
-        const iid = cb.dataset.iid;
-        const item = (note.checklist||[]).find(i=>i.id===iid); if(!item) return;
-        if(crit !== null && crit !== undefined && document.getElementById('bulk-crit')?.value !== '') {
-          // only update if user actually changed the select from disabled placeholder
-          const bcs = document.getElementById('bulk-crit');
-          if(bcs && bcs.selectedIndex > 0) item.criticity = crit;
-        }
-        if(start) { item.start_date = start; const inp = area.querySelector(`.date-input[data-iid="${iid}"][data-field="start_date"]`); if(inp) inp.value=start; }
-        if(due)   { item.due_date = due;     const inp = area.querySelector(`.date-input[data-iid="${iid}"][data-field="due_date"]`);   if(inp) inp.value=due;   }
-        // màj select criticité dans la ligne
-        const sel = area.querySelector(`.crit-select[data-iid="${iid}"]`);
-        const bcs2 = document.getElementById('bulk-crit');
-        if(sel && bcs2 && bcs2.selectedIndex > 0) sel.value = item.criticity||'';
-      });
-      showToast('Modifications appliquées');
-    });
-
-    area.querySelectorAll('.task-check').forEach(btn => {
-      btn.addEventListener('click', () => toggleItemInline(btn.dataset.iid, note));
-    });
-    area.querySelectorAll('.checklist-del').forEach(btn => {
-      btn.addEventListener('click', () => deleteItemInline(btn.dataset.iid, note));
-    });
-    area.querySelectorAll('.crit-select').forEach(sel => {
-      sel.addEventListener('change', () => { updateItemCriticity(sel.dataset.iid, note, sel.value); });
-    });
-    area.querySelectorAll('.date-input[data-field="due_date"]').forEach(inp => {
-      inp.addEventListener('change', () => updateItemDate(inp.dataset.iid, note, 'due_date', inp.value));
-    });
-    area.querySelectorAll('.date-input[data-field="start_date"]').forEach(inp => {
-      inp.addEventListener('change', () => updateItemDate(inp.dataset.iid, note, 'start_date', inp.value));
-    });
-    on('btn-add-item','click', () => addItemInline(note));
-    on('new-item-text','keydown', e => { if(e.key==='Enter') addItemInline(note); });
-    // Saisie vocale checklist
-    const voiceListBtn = document.getElementById('btn-voice-list');
-    if(voiceListBtn) attachVoice(voiceListBtn, text => {
-      const inp = document.getElementById('new-item-text');
-      if(inp) { inp.value = (inp.value + ' ' + text).trim(); inp.focus(); }
+  // ── Tâches ──
+  function updateBulkBar() {
+    const checked = area.querySelectorAll('.item-select-cb:checked');
+    const bar = document.getElementById('bulk-bar');
+    const countEl = document.getElementById('bulk-count');
+    if(bar) bar.style.display = checked.length ? 'flex' : 'none';
+    if(countEl) countEl.textContent = `${checked.length} sélectionnée${checked.length>1?'s':''}`;
+    area.querySelectorAll('.checklist-item').forEach(row => {
+      const cb = row.querySelector('.item-select-cb');
+      row.classList.toggle('selected', cb?.checked||false);
     });
   }
+
+  area.querySelectorAll('.item-select-cb').forEach(cb => {
+    cb.addEventListener('change', updateBulkBar);
+  });
+  on('bulk-clear','click', () => {
+    area.querySelectorAll('.item-select-cb').forEach(cb => { cb.checked = false; });
+    updateBulkBar();
+  });
+  on('bulk-apply','click', () => {
+    const start = document.getElementById('bulk-start')?.value;
+    const due = document.getElementById('bulk-due')?.value;
+    area.querySelectorAll('.item-select-cb:checked').forEach(cb => {
+      const iid = cb.dataset.iid;
+      const item = (note.checklist||[]).find(i=>i.id===iid); if(!item) return;
+      const bcs = document.getElementById('bulk-crit');
+      if(bcs && bcs.selectedIndex > 0) item.criticity = bcs.value;
+      if(start) { item.start_date = start; const inp = area.querySelector(`.date-input[data-iid="${iid}"][data-field="start_date"]`); if(inp) inp.value=start; }
+      if(due)   { item.due_date = due;     const inp = area.querySelector(`.date-input[data-iid="${iid}"][data-field="due_date"]`);   if(inp) inp.value=due;   }
+      const sel = area.querySelector(`.crit-select[data-iid="${iid}"]`);
+      if(sel && bcs && bcs.selectedIndex > 0) sel.value = item.criticity||'';
+    });
+    scheduleEditorSave();
+    showToast('Modifications appliquées');
+  });
+
+  area.querySelectorAll('.task-check').forEach(btn => {
+    btn.addEventListener('click', () => toggleItemInline(btn.dataset.iid, note));
+  });
+  area.querySelectorAll('.checklist-del').forEach(btn => {
+    btn.addEventListener('click', () => deleteItemInline(btn.dataset.iid, note));
+  });
+  area.querySelectorAll('.crit-select').forEach(sel => {
+    sel.addEventListener('change', () => { updateItemCriticity(sel.dataset.iid, note, sel.value); });
+  });
+  area.querySelectorAll('.date-input[data-field="due_date"]').forEach(inp => {
+    inp.addEventListener('change', () => updateItemDate(inp.dataset.iid, note, 'due_date', inp.value));
+  });
+  area.querySelectorAll('.date-input[data-field="start_date"]').forEach(inp => {
+    inp.addEventListener('change', () => updateItemDate(inp.dataset.iid, note, 'start_date', inp.value));
+  });
+  on('btn-add-item','click', () => addItemInline(note));
+  on('new-item-text','keydown', e => { if(e.key==='Enter') addItemInline(note); });
+  const voiceListBtn = document.getElementById('btn-voice-list');
+  if(voiceListBtn) attachVoice(voiceListBtn, text => {
+    const inp = document.getElementById('new-item-text');
+    if(inp) { inp.value = (inp.value + ' ' + text).trim(); inp.focus(); }
+  });
 }
 
 function checklistItemHtml(item) {
@@ -1701,21 +1716,25 @@ function toggleItemInline(iid, note) {
   if(cb) { cb.className=`task-check ${cfg.cls}`; cb.textContent=cfg.sigil||''; cb.title=cfg.label; }
   const tx = row.querySelector('.checklist-text');
   if(tx) { tx.className=`checklist-text${st==='done'?' done':''}`; }
+  scheduleEditorSave();
 }
 
 function deleteItemInline(iid, note) {
   note.checklist = (note.checklist||[]).filter(i=>i.id!==iid);
   document.getElementById('checklist-items')?.querySelector(`[data-iid="${iid}"]`)?.remove();
+  scheduleEditorSave();
 }
 
 function updateItemCriticity(iid, note, val) {
   const item = (note.checklist||[]).find(i=>i.id===iid); if(!item) return;
   item.criticity = val;
+  scheduleEditorSave();
 }
 
 function updateItemDate(iid, note, field, val) {
   const item = (note.checklist||[]).find(i=>i.id===iid); if(!item) return;
   item[field] = val || null;
+  scheduleEditorSave();
 }
 
 function addItemInline(note) {
@@ -1734,52 +1753,80 @@ function addItemInline(note) {
     inp2.addEventListener('change', () => updateItemDate(item.id, note, inp2.dataset.field, inp2.value));
   });
   inp.focus();
+  scheduleEditorSave();
 }
 
-// ── Save note ─────────────────────────────────────────
-async function saveNote() {
-  const modal = document.getElementById('modal-note'); if(!modal) return;
-  const nid = editingNoteId;
-  const existingIdx = notes.findIndex(n=>n.id===nid);
-  const existing = existingIdx>=0 ? notes[existingIdx] : null;
-
+// ── Enregistrement permanent ──────────────────────────
+// Recopie l'état de l'éditeur dans l'objet note en cours.
+function collectEditorState() {
+  if(!editingNoteObj) return null;
+  const modal = document.getElementById('modal-note');
   const titleEl = document.getElementById('note-title-input');
   const contentEl = document.getElementById('note-content');
-  const typeBtns = modal.querySelectorAll('.type-btn');
-  const activeType = [...typeBtns].find(b => b.classList.contains('btn-primary'))?.dataset.type || (existing?.type||'note');
-  const selectedColor = modal.querySelector('.color-swatch.selected')?.dataset.color || '#FFFFFF';
-  const selectedTags = [...modal.querySelectorAll('.tag-cb:checked')].map(c=>c.dataset.tid);
+  if(titleEl) editingNoteObj.title = titleEl.value.trim();
+  if(contentEl) editingNoteObj.content = contentEl.innerHTML;
+  const sw = modal?.querySelector('.color-swatch.selected');
+  if(sw) editingNoteObj.color = sw.dataset.color || '#FFFFFF';
+  const tagCbs = modal?.querySelectorAll('.tag-cb:checked');
+  if(tagCbs) editingNoteObj.tags = [...tagCbs].map(c=>c.dataset.tid);
+  // type dérivé, conservé pour la rétrocompatibilité de l'export
+  const txt = (editingNoteObj.content||'').replace(/<[^>]+>/g,'').trim();
+  const hasTasks = (editingNoteObj.checklist||[]).some(i=>!i.separator);
+  editingNoteObj.type = (hasTasks && !txt) ? 'task' : 'note';
+  return editingNoteObj;
+}
 
-  const checklist = existing ? [...(existing.checklist||[])] : [];
+function isEditorEmpty(n) {
+  const txt = (n.content||'').replace(/<[^>]+>/g,'').trim();
+  const hasTasks = (n.checklist||[]).some(i => i.text && i.text.trim());
+  return !(n.title||'').trim() && !txt && !hasTasks;
+}
 
-  const note = {
-    id: nid,
-    title: titleEl?.value?.trim() || '',
-    type: activeType,
-    content: activeType==='note' ? (contentEl?.innerHTML||'') : '',
-    checklist: activeType==='task' ? checklist : [],
-    tags: selectedTags,
-    color: selectedColor,
-    createdAt: existing?.createdAt || Date.now(),
-    updatedAt: Date.now(),
-  };
-  await dbPut('notes', note);
-  if(existingIdx>=0) notes[existingIdx] = note; else notes.unshift(note);
+async function persistEditing() {
+  const n = collectEditorState();
+  if(!n || isEditorEmpty(n)) return;
+  n.updatedAt = Date.now();
+  const idx = notes.findIndex(x => x.id === n.id);
+  if(idx >= 0) notes[idx] = n; else notes.unshift(n);
+  await dbPut('notes', n);
   scheduleAutoExport();
+}
+
+// Variante synchrone pour beforeunload (IndexedDB best-effort + sauvegarde locale).
+function flushEditorSync() {
+  const n = collectEditorState();
+  if(!n || isEditorEmpty(n)) return;
+  n.updatedAt = Date.now();
+  const idx = notes.findIndex(x => x.id === n.id);
+  if(idx >= 0) notes[idx] = n; else notes.unshift(n);
+  try { dbPut('notes', n); } catch(e) {}
+  backupToLocalStorage();
+}
+
+function scheduleEditorSave() {
+  clearTimeout(editorSaveTimer);
+  editorSaveTimer = setTimeout(persistEditing, 500);
+}
+
+async function closeEditor() {
+  clearTimeout(editorSaveTimer);
+  await persistEditing();
   document.getElementById('modal-note')?.classList.remove('open');
   editingNoteId = null;
+  editingNoteObj = null;
   render();
-  showToast('Note enregistrée');
 }
 
 async function deleteNote() {
   if(!editingNoteId) return;
   if(!confirm('Supprimer cette note ?')) return;
+  clearTimeout(editorSaveTimer);
   await dbDelete('notes', editingNoteId);
   notes = notes.filter(n=>n.id!==editingNoteId);
   scheduleAutoExport();
   document.getElementById('modal-note')?.classList.remove('open');
   editingNoteId = null;
+  editingNoteObj = null;
   render();
   showToast('Note supprimée');
 }
@@ -1788,7 +1835,6 @@ async function deleteNote() {
 function getAllTasks() {
   const tasks = [];
   notes.forEach(n => {
-    if(n.type!=='task') return;
     const noteTags = (n.tags||[]).map(tid => { const t=tags.find(x=>x.id===tid); return t?t.name:null; }).filter(Boolean);
     const tagLabel = noteTags[0] || null;
     (n.checklist||[]).forEach(item => {
@@ -2124,6 +2170,11 @@ function applyTheme() {
 
 // ── Changelog ─────────────────────────────────────────
 const CHANGELOG = [
+  { version:'3.3.0', date:'2026-06-09', tag:'minor', entries:[
+    { icon:'📝', text:'Éditeur unifié — le contenu de la note et la liste de tâches sont réunis dans une seule fiche (texte en haut, tâches en dessous). Le basculement entre les onglets Note texte et Liste de tâches est supprimé.' },
+    { icon:'💾', text:'Enregistrement permanent — chaque saisie est sauvegardée automatiquement (titre, contenu, tâches, couleur, étiquettes), sans bouton à actionner et sans perte de saisie au changement de contexte. Sauvegarde de sécurité au passage en arrière-plan et à la fermeture.' },
+    { icon:'🔎', text:'Filtre d\'étiquettes par exclusion — un premier clic inclut l\'étiquette, un deuxième l\'exclut (tout sauf), un troisième la retire. Disponible dans les onglets Notes, Tâches et Dates, avec un repère non chromatique pour l\'accessibilité.' },
+  ]},
   { version:'3.2.2', date:'2026-05-21', tag:'patch', entries:[
     { icon:'🔐', text:'Export chiffré — saisie du mot de passe dans une modale dédiée avec champ masqué (*) et bouton œil pour afficher/masquer.' },
   ]},
@@ -2279,10 +2330,12 @@ async function init() {
 })();
 
 on('fab-add','click', () => openNote(null));
-on('note-save','click', saveNote);
+on('note-save','click', closeEditor);
 on('note-delete','click', deleteNote);
-on('note-cancel','click', () => { document.getElementById('modal-note')?.classList.remove('open'); editingNoteId=null; });
-on('note-close','click', () => { document.getElementById('modal-note')?.classList.remove('open'); editingNoteId=null; });
+on('note-close','click', closeEditor);
+// Filets de sécurité : enregistrer si l'app passe en arrière-plan ou se ferme
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden' && editingNoteObj) persistEditing(); });
+window.addEventListener('beforeunload', () => { if(editingNoteObj) flushEditorSync(); });
 on('btn-version','click', openChangelog);
 on('changelog-close','click', () => document.getElementById('modal-changelog')?.classList.remove('open'));
 on('report-close','click', () => document.getElementById('modal-report')?.classList.remove('open'));
