@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#E30613">
+<meta name="theme-color" content="#0b0b0b">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Notes">
-<title>Notes</title>
+<title>notes. v3.4</title>
 <link rel="manifest" href="/dm_notes/manifest.json">
 <link rel="apple-touch-icon" href="/dm_notes/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,28 +16,26 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
 :root {
-  --red:#E30613;--red-dark:#B91818;--red-light:#FCE1D7;
-  --bg:#F0F0F0;--surface:#FFFFFF;--surface2:#F8F8F8;--surface3:#ECECEC;
-  --text1:#333333;--text2:#4C4C4B;--text3:#828485;
-  --border:#E0E0E0;--border2:#CCCCCC;
-  --radius:4px;--radius-sm:3px;--radius-lg:8px;
-  --shadow:0 1px 4px rgba(0,0,0,.08);
-  /* criticité */
-  --c-crit-bg:#FCE1D7;--c-crit-tx:#B91818;
-  --c-elev-bg:#FFF2CD;--c-elev-tx:#9D6D2C;
-  --c-moye-bg:#E7F1E2;--c-moye-tx:#538154;
-  --c-faib-bg:#ECECEC;--c-faib-tx:#4C4C4B;
-  /* statuts */
-  --s-wait-bg:#FFF2CD;--s-wait-tx:#9D6D2C;
-  --s-do-bg:#E4F3FD;--s-do-tx:#185FA5;
-  --s-done-bg:#E7F1E2;--s-done-tx:#538154;
-  /* Gantt */
-  --gantt-crit:#E30613;--gantt-elev:#9D6D2C;--gantt-moye:#538154;--gantt-faib:#828485;
+  --red:#E30613;--red-dark:#B91818;--red-light:rgba(227,6,19,0.15);
+  --bg:#0b0b0b;--surface:#191919;--surface2:#212121;--surface3:#2a2a2a;
+  --text1:#f0f0f0;--text2:#787878;--text3:#404040;
+  --border:#252525;--border2:#303030;
+  --radius:4px;--radius-sm:3px;--radius-lg:6px;
+  --shadow:0 2px 8px rgba(0,0,0,.5);
+  --c-crit-bg:#2c1712;--c-crit-tx:#e8a090;
+  --c-elev-bg:#221d09;--c-elev-tx:#d4b050;
+  --c-moye-bg:#121e15;--c-moye-tx:#78b87a;
+  --c-faib-bg:#212121;--c-faib-tx:#707070;
+  --s-wait-bg:#221d09;--s-wait-tx:#d4b050;
+  --s-do-bg:#0d1e2d;--s-do-tx:#7abde8;
+  --s-done-bg:#121e15;--s-done-tx:#78b87a;
+  --gantt-crit:#E30613;--gantt-elev:#9D6D2C;--gantt-moye:#538154;--gantt-faib:#505050;
+  --sidebar-bg:#0e0e0e;
 }
 [data-theme=dark]{
-  --bg:#1A1A1A;--surface:#242424;--surface2:#2E2E2E;--surface3:#383838;
-  --text1:#F0F0F0;--text2:#C8C8C8;--text3:#828485;
-  --border:#3A3A3A;--border2:#4A4A4A;
+  --bg:#080808;--surface:#141414;--surface2:#1a1a1a;--surface3:#202020;
+  --text1:#f8f8f8;--text2:#909090;--text3:#505050;
+  --border:#1e1e1e;--border2:#282828;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;font-family:'Anek Latin',Arial,sans-serif;font-size:15px;color:var(--text1);background:var(--bg)}
@@ -45,7 +43,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 input,textarea,select{font-family:inherit;font-size:14px}
 a{color:var(--red);text-decoration:none}
 /* ── Layout ── */
-#app{display:flex;flex-direction:column;height:100%;max-width:960px;margin:0 auto;position:relative}
+#app{display:flex;flex-direction:row;height:100%;position:relative;overflow:hidden}
 .topbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
 .topbar-title{font-size:18px;font-weight:700;color:var(--red);letter-spacing:-.5px}
 .topbar-title span{color:var(--text3)}
@@ -310,40 +308,112 @@ a{color:var(--red);text-decoration:none}
   .tasks-sidebar>*{flex:1;min-width:160px}
   .notes-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
 }
+
+/* === v3.4 Sidebar === */
+.sidebar{width:224px;flex-shrink:0;background:var(--sidebar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100%}
+.sidebar-logo{padding:22px 20px 16px;border-bottom:1px solid var(--border)}
+.sidebar-logo-title{font-size:20px;font-weight:700;letter-spacing:-.5px;line-height:1;color:var(--text1)}
+.sidebar-logo-dot{color:var(--red)}
+.sidebar-logo-sub{font-size:9px;color:var(--text3);margin-top:4px;font-family:'Courier New',monospace;letter-spacing:.04em}
+.sidebar-nav{padding:8px 0;border-bottom:1px solid var(--border)}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;border-left:2px solid transparent;color:var(--text2);background:none;border-right:none;border-top:none;border-bottom:none;width:100%;text-align:left;font-family:inherit;font-size:12px;transition:background .12s,color .12s;margin-bottom:1px}
+.sidebar-nav-item:hover{background:var(--surface2);color:var(--text1)}
+.sidebar-nav-item.active{background:var(--red-light);border-left-color:var(--red);color:var(--text1)}
+.sidebar-nav-item.active i{color:var(--red)}
+.sidebar-nav-item i{font-size:14px;flex-shrink:0}
+.sidebar-nav-label{flex:1;font-weight:400}
+.sidebar-nav-item.active .sidebar-nav-label{font-weight:600}
+.sidebar-nav-count{font-family:'Courier New',monospace;font-size:10px;color:var(--text3)}
+.sidebar-tasks-panel{flex:1;padding:14px 20px;overflow:hidden}
+.sidebar-tasks-heading{font-family:'Courier New',monospace;font-size:9px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:6px}
+.sidebar-task-card{margin-bottom:8px;padding:8px 10px;border-radius:4px;border:1px solid var(--border);background:var(--surface);cursor:pointer}
+.sidebar-task-card:hover{border-color:var(--border2)}
+.sidebar-task-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;display:inline-block}
+.sidebar-task-crit-row{display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.sidebar-task-crit-label{font-family:'Courier New',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.05em}
+.sidebar-task-text{font-size:11px;color:var(--text1);line-height:1.45;margin-bottom:2px}
+.sidebar-task-note{font-size:10px;color:var(--text2)}
+.sidebar-bottom{padding:10px 20px;border-top:1px solid var(--border);display:flex;gap:6px;align-items:center}
+.sidebar-btn{width:28px;height:28px;border-radius:4px;border:1px solid var(--border);background:none;color:var(--text3);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;font-family:inherit}
+.sidebar-btn:hover{border-color:var(--border2);color:var(--text2)}
+.version-badge-sidebar{font-size:9px;font-family:'Courier New',monospace;color:var(--text3);background:none;border:1px solid var(--border);border-radius:4px;padding:0 7px;height:24px;cursor:pointer;white-space:nowrap;margin-left:auto}
+.version-badge-sidebar:hover{color:var(--text2)}
+.main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{display:flex;align-items:center;gap:10px;padding:10px 22px;background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;flex-shrink:0}
+.topbar-title,.topbar-theme,.nav,.fab{display:none!important}
+.topbar-sync{font-size:11px;color:var(--text3);font-family:'Courier New',monospace;letter-spacing:.05em}
+.topbar-sync.saving{color:var(--c-elev-tx)}
+.topbar-sync.saved{color:var(--c-moye-tx)}
+.fab-inline{display:flex;align-items:center;gap:6px;height:30px;padding:0 14px;border-radius:4px;background:var(--red);color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:auto;flex-shrink:0}
+.fab-inline:hover{background:var(--red-dark)}
+.fab-inline:active{transform:scale(.97)}
+.app-footer{padding:7px 22px;border-top:1px solid var(--border);background:var(--bg);font-size:10px;color:var(--text3);font-family:'Courier New',monospace;flex-shrink:0;display:block}
+.app-footer-warn,.app-footer-actions{display:none}
+@media(max-width:640px){
+  #app{flex-direction:column}
+  .sidebar{width:100%;height:auto;flex-direction:row;border-right:none;border-bottom:1px solid var(--border)}
+  .sidebar-logo,.sidebar-tasks-panel,.sidebar-bottom{display:none}
+  .sidebar-nav{display:flex;padding:0;border-bottom:none;flex:1;overflow-x:auto}
+  .sidebar-nav-item{flex-direction:column;gap:2px;padding:8px 10px;border-left:none;border-bottom:3px solid transparent;min-width:56px;justify-content:center;align-items:center;font-size:10px;flex:1}
+  .sidebar-nav-item.active{border-bottom-color:var(--red);background:transparent}
+  .sidebar-nav-count{display:none}
+}
+
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="topbar">
-    <div class="topbar-title">notes<span>.</span></div>
-    <button class="version-badge" id="btn-version" aria-label="Voir le changelog">v3.3.0</button>
-    <span class="topbar-sync" id="sync-status" aria-live="polite"></span>
-    <button class="topbar-theme" id="btn-theme" aria-label="Basculer thème" title="Thème clair/sombre">
-      <i class="bi bi-moon-fill" id="theme-icon"></i>
-    </button>
+  <aside class="sidebar" id="sidebar" role="navigation" aria-label="Navigation principale">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-title">notes<span class="sidebar-logo-dot">.</span></div>
+      <div class="sidebar-logo-sub">v3.4.0 · dm-notes</div>
+    </div>
+    <nav class="sidebar-nav" role="tablist" aria-label="Onglets">
+      <button class="sidebar-nav-item active" id="tab-notes" role="tab" aria-selected="true">
+        <i class="bi bi-journal-text"></i>
+        <span class="sidebar-nav-label">Notes</span>
+        <span class="sidebar-nav-count" id="snav-notes"></span>
+      </button>
+      <button class="sidebar-nav-item" id="tab-tasks" role="tab" aria-selected="false">
+        <i class="bi bi-check2-square"></i>
+        <span class="sidebar-nav-label">Tâches</span>
+        <span class="sidebar-nav-count" id="snav-tasks"></span>
+      </button>
+      <button class="sidebar-nav-item" id="tab-matrix" role="tab" aria-selected="false">
+        <i class="bi bi-grid-1x2"></i>
+        <span class="sidebar-nav-label">Matrices</span>
+      </button>
+      <button class="sidebar-nav-item" id="tab-date" role="tab" aria-selected="false">
+        <i class="bi bi-calendar3"></i>
+        <span class="sidebar-nav-label">Date</span>
+        <span class="sidebar-nav-count" id="snav-date"></span>
+      </button>
+      <button class="sidebar-nav-item" id="tab-data" role="tab" aria-selected="false">
+        <i class="bi bi-database"></i>
+        <span class="sidebar-nav-label">Données</span>
+      </button>
+    </nav>
+    <div class="sidebar-tasks-panel" id="sidebar-tasks-panel"></div>
+    <div class="sidebar-bottom">
+      <button class="sidebar-btn" id="btn-theme" aria-label="Basculer theme">
+        <i class="bi bi-moon-fill" id="theme-icon"></i>
+      </button>
+      <button class="sidebar-btn" id="btn-help-footer" aria-label="Aide"><i class="bi bi-question-circle"></i></button>
+      <button class="sidebar-btn" id="btn-purge" aria-label="A supprimer ?"><i class="bi bi-trash3"></i></button>
+      <button class="version-badge-sidebar" id="btn-version" aria-label="Voir le changelog">v3.4.0</button>
+    </div>
+  </aside>
+  <div class="main-wrap">
+    <div class="topbar">
+      <span class="topbar-sync" id="sync-status" aria-live="polite"></span>
+      <button class="fab-inline" id="fab-add" aria-label="Nouvelle note">
+        <i class="bi bi-plus-lg"></i> Nouvelle note
+      </button>
+    </div>
+    <div class="filter-bar" id="global-filter-bar" role="search" aria-label="Filtres globaux"></div>
+    <div class="content" id="content" role="main"></div>
+    <footer class="app-footer" role="contentinfo">localStorage · données locales · exportez régulièrement</footer>
   </div>
-  <nav class="nav" role="tablist" aria-label="Onglets principaux">
-    <button class="nav-tab active" id="tab-notes" role="tab" aria-selected="true">Notes</button>
-    <button class="nav-tab" id="tab-tasks" role="tab" aria-selected="false">Tâches</button>
-    <button class="nav-tab" id="tab-matrix" role="tab" aria-selected="false">Matrices</button>
-    <button class="nav-tab" id="tab-date" role="tab" aria-selected="false">Date</button>
-    <button class="nav-tab" id="tab-data" role="tab" aria-selected="false">Données</button>
-  </nav>
-  <div class="filter-bar" id="global-filter-bar" role="search" aria-label="Filtres globaux"></div>
-  <div class="content" id="content" role="main"></div>
-  <footer class="app-footer" role="contentinfo">
-    <div class="app-footer-warn">
-      <i class="bi bi-exclamation-triangle-fill"></i>
-      <span>Données stockées localement — vider le cache supprime toutes les notes. Exportez régulièrement.</span>
-    </div>
-    <div class="app-footer-actions">
-      <button class="footer-btn" id="btn-purge" title="Lister les notes dont toutes les tâches sont terminées"><i class="bi bi-trash3"></i> À supprimer ?</button>
-      <button class="footer-btn" id="btn-help-footer" title="Aide"><i class="bi bi-question-circle"></i> Aide</button>
-    </div>
-  </footer>
-  <button class="fab" id="fab-add" aria-label="Nouvelle note">
-    <i class="bi bi-plus-lg"></i>
-  </button>
 </div>
 
 <!-- Bannière MAJ -->
@@ -445,7 +515,7 @@ a{color:var(--red);text-decoration:none}
 
 <script>
 'use strict';
-const APP_VERSION = '3.3.0';
+const APP_VERSION = '3.4.0';
 const DB_NAME = 'notes-db', DB_VERSION = 2;
 let db, notes = [], tags = [], currentTab = 'notes';
 let editingNoteId = null;
@@ -712,8 +782,43 @@ function contrastRatio(hex1, hex2) {
   const bright = Math.max(l1,l2), dark = Math.min(l1,l2);
   return (bright + .05) / (dark + .05);
 }
+// -- renderSidebar v3.4 --
+function renderSidebar() {
+  var at = getAllTasks(), act = at.filter(function(t){ return getStatus(t)!=='done'; });
+  var e1=document.getElementById('snav-notes'); if(e1) e1.textContent=notes.length||'';
+  var e2=document.getElementById('snav-tasks'); if(e2) e2.textContent=act.length||'';
+  var due=act.filter(function(t){var d=daysFrom(t.due_date);return d!==null&&d<=7;});
+  var e3=document.getElementById('snav-date'); if(e3) e3.textContent=due.length||'';
+  document.querySelectorAll('.sidebar-nav-item').forEach(function(b){
+    var a=b.id==='tab-'+currentTab;
+    b.classList.toggle('active',a);
+    b.setAttribute('aria-selected',a?'true':'false');
+  });
+  var panel=document.getElementById('sidebar-tasks-panel'); if(!panel) return;
+  var dc={critique:'#B91818',elevee:'#9D6D2C',moyenne:'#538154'};
+  var lbl={critique:'Critique',elevee:'Elevee',moyenne:'Moyenne'};
+  var top=act.filter(function(t){return['critique','elevee','moyenne'].indexOf(t.criticity||'')>=0;})
+    .sort(function(a,b){return(CRIT_ORDER[a.criticity||'faible']||3)-(CRIT_ORDER[b.criticity||'faible']||3);})
+    .slice(0,3);
+  if(!top.length){panel.innerHTML='<div class="sidebar-tasks-heading">Aucune tache prioritaire</div>';return;}
+  var o='<div class="sidebar-tasks-heading"><span style="width:5px;height:5px;border-radius:50%;background:var(--red);display:inline-block;flex-shrink:0"></span> Priorite haute</div>';
+  top.forEach(function(t){
+    var c=dc[t.criticity]||'#404040',l=lbl[t.criticity]||'';
+    o+='<div class="sidebar-task-card" data-nid="'+t.noteId+'">';
+    o+='<div class="sidebar-task-crit-row"><span class="sidebar-task-dot" style="background:'+c+'"></span>';
+    o+='<span class="sidebar-task-crit-label" style="color:'+c+'">'+l+'</span></div>';
+    o+='<div class="sidebar-task-text">'+(t.text||'')+'</div>';
+    o+='<div class="sidebar-task-note">'+(t.noteTitle||'')+'</div></div>';
+  });
+  panel.innerHTML=o;
+  panel.querySelectorAll('.sidebar-task-card[data-nid]').forEach(function(c){
+    c.addEventListener('click',function(){openNote(c.dataset.nid);});
+  });
+}
+
 function render() {
   renderFilterBar();
+  renderSidebar();
   const el = document.getElementById('content'); if(!el) return;
   if(currentTab === 'notes')  renderNotes(el);
   else if(currentTab === 'tasks')  renderTasks(el);
@@ -2170,6 +2275,10 @@ function applyTheme() {
 
 // ── Changelog ─────────────────────────────────────────
 const CHANGELOG = [
+  { version:'3.4.0', date:'2026-06-14', tag:'minor', entries:[
+    { icon:'🎨', text:'Refonte graphique — palette sombre avec navigation laterale : sidebar integree, apercu des taches prioritaires, compteurs par vue, bouton Nouvelle note inline.' },
+    { icon:'🌙', text:'Theme sombre par defaut. Bascule clair/sombre via la sidebar.' },
+  ]},
   { version:'3.3.0', date:'2026-06-09', tag:'minor', entries:[
     { icon:'📝', text:'Éditeur unifié — le contenu de la note et la liste de tâches sont réunis dans une seule fiche (texte en haut, tâches en dessous). Le basculement entre les onglets Note texte et Liste de tâches est supprimé.' },
     { icon:'💾', text:'Enregistrement permanent — chaque saisie est sauvegardée automatiquement (titre, contenu, tâches, couleur, étiquettes), sans bouton à actionner et sans perte de saisie au changement de contexte. Sauvegarde de sécurité au passage en arrière-plan et à la fermeture.' },
@@ -2348,13 +2457,13 @@ on('btn-update-dismiss','click', () => {
 on('btn-update-save','click', async () => { await exportJSON(); showToast('Sauvegarde effectuée — rechargement…'); setTimeout(()=>location.reload(true),1800); });
 
 on('btn-purge','click', openPurge);
-on('btn-help-footer','click', () => { currentTab = 'help'; document.querySelectorAll('.nav-tab').forEach(t=>{ t.classList.remove('active'); t.setAttribute('aria-selected','false'); }); render(); });
+on('btn-help-footer','click', () => { currentTab = 'help'; document.querySelectorAll('.sidebar-nav-item').forEach(t=>{ t.classList.remove('active'); t.setAttribute('aria-selected','false'); }); render(); });
 
 // Onglets
 ['notes','tasks','matrix','date','data','help'].forEach(tab => {
   on('tab-'+tab,'click', () => {
     currentTab = tab;
-    document.querySelectorAll('.nav-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+    document.querySelectorAll('.sidebar-nav-item').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
     const activeTab = document.getElementById('tab-'+tab);
     if(activeTab) { activeTab.classList.add('active'); activeTab.setAttribute('aria-selected','true'); }
     render();
