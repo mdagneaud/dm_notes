@@ -37,6 +37,22 @@
   --text1:#f8f8f8;--text2:#909090;--text3:#505050;
   --border:#1e1e1e;--border2:#282828;
 }
+[data-theme=light]{
+  --red:#E30613;--red-dark:#B91818;--red-light:#FCE1D7;
+  --bg:#F0F0F0;--surface:#FFFFFF;--surface2:#F8F8F8;--surface3:#ECECEC;
+  --text1:#333333;--text2:#4C4C4B;--text3:#828485;
+  --border:#E0E0E0;--border2:#CCCCCC;
+  --shadow:0 1px 4px rgba(0,0,0,.08);
+  --c-crit-bg:#FCE1D7;--c-crit-tx:#B91818;
+  --c-elev-bg:#FFF2CD;--c-elev-tx:#9D6D2C;
+  --c-moye-bg:#E7F1E2;--c-moye-tx:#538154;
+  --c-faib-bg:#ECECEC;--c-faib-tx:#4C4C4B;
+  --s-wait-bg:#FFF2CD;--s-wait-tx:#9D6D2C;
+  --s-do-bg:#E4F3FD;--s-do-tx:#185FA5;
+  --s-done-bg:#E7F1E2;--s-done-tx:#538154;
+  --gantt-crit:#E30613;--gantt-elev:#9D6D2C;--gantt-moye:#538154;--gantt-faib:#828485;
+  --sidebar-bg:#1C1917;
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;font-family:'Anek Latin',Arial,sans-serif;font-size:15px;color:var(--text1);background:var(--bg)}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
@@ -338,6 +354,23 @@ a{color:var(--red);text-decoration:none}
 .sidebar-btn:hover{border-color:var(--border2);color:var(--text2)}
 .version-badge-sidebar{font-size:9px;font-family:'Courier New',monospace;color:var(--text3);background:none;border:1px solid var(--border);border-radius:4px;padding:0 7px;height:24px;cursor:pointer;white-space:nowrap;margin-left:auto}
 .version-badge-sidebar:hover{color:var(--text2)}
+/* Sidebar always-dark — textes fixes, indépendants du thème */
+.sidebar-logo-title{color:#e8e0d5 !important}
+.sidebar-logo-sub{color:#5a4a40 !important}
+.sidebar-nav-item{color:#8a7a6e !important}
+.sidebar-nav-item:hover{color:#e8e0d5 !important;background:rgba(255,255,255,0.06) !important}
+.sidebar-nav-item.active{color:#e8e0d5 !important}
+.sidebar-nav-item.active i{color:var(--red) !important}
+.sidebar-nav-count{color:#4a3a30 !important}
+.sidebar-tasks-heading{color:#4a3a30 !important}
+.sidebar-task-card{background:#1e1916 !important;border-color:#2a2220 !important}
+.sidebar-task-card:hover{border-color:#3a3230 !important}
+.sidebar-task-text{color:#d0c8c0 !important}
+.sidebar-task-note{color:#8a7a6e !important}
+.sidebar-btn{color:#5a4a40 !important;border-color:#2a2220 !important}
+.sidebar-btn:hover{color:#a0908a !important;border-color:#3a3230 !important}
+.version-badge-sidebar{color:#5a4a40 !important;border-color:#2a2220 !important}
+.version-badge-sidebar:hover{color:#a0908a !important}
 .main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
 .topbar{display:flex;align-items:center;gap:10px;padding:10px 22px;background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;flex-shrink:0}
 .topbar-title,.topbar-theme,.nav,.fab{display:none!important}
