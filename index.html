@@ -2,18 +2,20 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#141414">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Notes">
-<title>notes. v3.4</title>
+<title>notes. v3.7</title>
 <link rel="manifest" href="/dm_notes/manifest.json">
 <link rel="apple-touch-icon" href="/dm_notes/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@300;400;500;600;700&display=swap">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
 <script>(function(){try{var t=localStorage.getItem('theme')||'light';var p=localStorage.getItem('palette')||'cdc';var r=document.documentElement;r.setAttribute('data-theme',t);r.setAttribute('data-palette',p);}catch(e){}})();</script>
 <style>
 :root {
@@ -489,6 +491,12 @@ a{color:var(--red);text-decoration:none}
 .filter-pill-date{padding:3px 8px;border-radius:10px;font-size:12px;border:1px solid var(--border);color:var(--text2);background:var(--surface)}
 .filter-pill-date:focus{outline:2px solid var(--red);outline-offset:1px}
 .filter-bar-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;margin:0 4px}
+.filter-bar-status{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:12px;color:var(--text2);flex-wrap:wrap}
+.filter-bar-status strong{color:var(--text1);font-weight:600}
+.filter-reset{display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:3px 10px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;border:1px solid var(--red);color:var(--red);background:var(--surface);cursor:pointer;white-space:nowrap}
+.filter-reset:hover{background:var(--red);color:var(--on-accent)}
+.filter-reset:focus-visible,.filter-pill:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.filter-empty{display:flex;flex-direction:column;align-items:center;gap:10px}
 /* ── Sélection multiple checklist ── */
 .checklist-item.selected{background:var(--surface2);border-radius:var(--radius-sm)}
 .item-select-cb{width:15px;height:15px;accent-color:var(--red);cursor:pointer;flex-shrink:0}
@@ -621,7 +629,7 @@ a{color:var(--red);text-decoration:none}
   <aside class="sidebar" id="sidebar" role="navigation" aria-label="Navigation principale">
     <div class="sidebar-logo">
       <div class="sidebar-logo-title">notes<span class="sidebar-logo-dot">.</span></div>
-      <div class="sidebar-logo-sub">v3.6.0 · dm-notes</div>
+      <div class="sidebar-logo-sub">v3.7.0 · dm-notes</div>
     </div>
     <nav class="sidebar-nav" role="tablist" aria-label="Onglets">
       <button class="sidebar-nav-item active" id="tab-notes" role="tab" aria-selected="true">
@@ -666,7 +674,7 @@ a{color:var(--red);text-decoration:none}
       </button>
       <button class="sidebar-btn" id="btn-help-footer" aria-label="Aide"><i class="bi bi-question-circle"></i></button>
       <button class="sidebar-btn" id="btn-purge" aria-label="A supprimer ?"><i class="bi bi-trash3"></i></button>
-      <button class="version-badge-sidebar" id="btn-version" aria-label="Voir le changelog">v3.6.0</button>
+      <button class="version-badge-sidebar" id="btn-version" aria-label="Voir le changelog">v3.7.0</button>
     </div>
   </aside>
   <div class="main-wrap">
@@ -726,29 +734,30 @@ a{color:var(--red);text-decoration:none}
 <div class="modal-overlay" id="modal-pwd" role="dialog" aria-modal="true" aria-labelledby="modal-pwd-title">
   <div class="modal" style="max-width:400px">
     <div class="modal-header">
-      <h2 id="modal-pwd-title"><i class="bi bi-lock" style="margin-right:6px"></i>Exporter chiffré</h2>
+      <h2 id="modal-pwd-title"><i class="bi bi-lock" style="margin-right:6px" aria-hidden="true"></i><span id="modal-pwd-title-text">Exporter chiffré</span></h2>
       <button class="modal-close" id="pwd-close" aria-label="Fermer"><i class="bi bi-x-lg"></i></button>
     </div>
     <div class="modal-body">
       <div style="margin-bottom:14px">
         <label style="font-size:13px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px" for="pwd-input">Mot de passe</label>
         <div style="position:relative;display:flex;align-items:center">
-          <input class="input-field" type="password" id="pwd-input" placeholder="Mot de passe…" style="padding-right:38px" autocomplete="new-password">
+          <input class="input-field" type="password" id="pwd-input" placeholder="Mot de passe…" style="padding-right:38px" autocomplete="new-password" aria-describedby="pwd-hint pwd-error" spellcheck="false" autocapitalize="off">
           <button type="button" id="pwd-toggle" style="position:absolute;right:8px;color:var(--text3);font-size:16px;line-height:1" aria-label="Afficher/masquer le mot de passe"><i class="bi bi-eye"></i></button>
         </div>
       </div>
-      <div style="margin-bottom:6px">
+      <p id="pwd-hint" style="font-size:12px;color:var(--text2);margin:-6px 0 12px">12 caractères minimum. Sans ce mot de passe, l'export est irrécupérable.</p>
+      <div style="margin-bottom:6px" id="pwd-confirm-block">
         <label style="font-size:13px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px" for="pwd-confirm">Confirmer le mot de passe</label>
         <div style="position:relative;display:flex;align-items:center">
-          <input class="input-field" type="password" id="pwd-confirm" placeholder="Confirmation…" style="padding-right:38px" autocomplete="new-password">
+          <input class="input-field" type="password" id="pwd-confirm" placeholder="Confirmation…" style="padding-right:38px" autocomplete="new-password" aria-describedby="pwd-error" spellcheck="false" autocapitalize="off">
           <button type="button" id="pwd-confirm-toggle" style="position:absolute;right:8px;color:var(--text3);font-size:16px;line-height:1" aria-label="Afficher/masquer la confirmation"><i class="bi bi-eye"></i></button>
         </div>
       </div>
-      <div id="pwd-error" style="font-size:12px;color:var(--c-crit-tx);min-height:18px;margin-top:6px"></div>
+      <div id="pwd-error" role="alert" style="font-size:12px;color:var(--c-crit-tx);min-height:18px;margin-top:6px"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" id="pwd-cancel">Annuler</button>
-      <button class="btn btn-primary" id="pwd-ok"><i class="bi bi-lock"></i> Exporter</button>
+      <button class="btn btn-primary" id="pwd-ok"><i class="bi bi-lock" aria-hidden="true"></i> <span id="pwd-ok-text">Exporter</span></button>
     </div>
   </div>
 </div>
@@ -781,14 +790,13 @@ a{color:var(--red);text-decoration:none}
 
 <script>
 'use strict';
-const APP_VERSION = '3.6.0';
+const APP_VERSION = '3.7.0';
 const DB_NAME = 'notes-db', DB_VERSION = 2;
 let db, notes = [], tags = [], currentTab = 'notes';
 let editingNoteId = null;
 let editingNoteObj = null;     // référence de la note en cours d'édition (autosave)
 let editorSaveTimer = null;
 let notesSearchTerm = '';
-let activeTagFilters = new Map(); // tagId -> 'include' | 'exclude'
 
 // ── Helpers ──────────────────────────────────────────
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
@@ -825,6 +833,81 @@ function backupToLocalStorage() {
   try { localStorage.setItem('notes-backup', JSON.stringify({notes, tags, ts: Date.now()})); } catch(e) {}
 }
 function on(id, evt, fn) { const el = document.getElementById(id); if(el) el.addEventListener(evt, fn); }
+
+// ── Sécurité : échappement et assainissement ─────────
+// Toute donnée saisie ou importée passe par esc() avant d'être injectée dans innerHTML.
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"'`]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]));
+}
+// Liste blanche du contenu riche produit par l'éditeur ; tout le reste est retiré.
+const SAFE_TAGS = new Set(['B','STRONG','I','EM','U','S','STRIKE','DEL','BR','HR','P','DIV','SPAN','UL','OL','LI','H1','H2','H3','H4','BLOCKQUOTE','PRE','CODE']);
+const DROP_TAGS = new Set(['SCRIPT','STYLE','IFRAME','FRAME','OBJECT','EMBED','TEMPLATE','SVG','MATH','NOSCRIPT','TITLE','LINK','META','BASE','FORM','INPUT','BUTTON','TEXTAREA','SELECT','IMG','VIDEO','AUDIO','SOURCE','CANVAS']);
+function sanitizeHtml(html) {
+  if(!html) return '';
+  const doc = new DOMParser().parseFromString(`<div>${String(html)}</div>`, 'text/html');
+  const walk = node => {
+    [...node.childNodes].forEach(ch => {
+      if(ch.nodeType === Node.TEXT_NODE) return;
+      if(ch.nodeType !== Node.ELEMENT_NODE) { ch.remove(); return; }
+      if(DROP_TAGS.has(ch.tagName)) { ch.remove(); return; }
+      walk(ch);
+      if(!SAFE_TAGS.has(ch.tagName)) { ch.replaceWith(...ch.childNodes); return; }
+      [...ch.attributes].forEach(a => ch.removeAttribute(a.name));
+    });
+  };
+  const root = doc.body.firstElementChild || doc.body;
+  walk(root);
+  return root.innerHTML;
+}
+// Texte brut d'un contenu HTML, sans exécution ni chargement de ressources
+function htmlToText(html) {
+  if(!html) return '';
+  return (new DOMParser().parseFromString(String(html), 'text/html').body.textContent || '').replace(/\s+/g,' ').trim();
+}
+// Normalise un jeu de données (import, restauration, chargement) : identifiants, couleurs, dates, énumérations
+const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
+const SAFE_TOKEN = /^[A-Za-z0-9_-]{0,32}$/;
+const SAFE_DATE = /^\d{4}-\d{2}-\d{2}$/;
+function sanitizeData(rawNotes, rawTags) {
+  const str = v => (v === null || v === undefined) ? '' : String(v).slice(0, 10000);
+  const tok = (v, fallback='') => (typeof v === 'string' && SAFE_TOKEN.test(v)) ? v : fallback;
+  const date = v => (typeof v === 'string' && SAFE_DATE.test(v)) ? v : null;
+  const idMap = new Map();
+  const cleanTags = (Array.isArray(rawTags) ? rawTags : []).filter(t => t && typeof t === 'object').map(t => {
+    const id = (typeof t.id === 'string' && SAFE_ID.test(t.id)) ? t.id : uid();
+    idMap.set(t.id, id);
+    return { id, name: str(t.name).slice(0, 200) || 'Sans nom' };
+  });
+  const seen = new Set();
+  const cleanNotes = (Array.isArray(rawNotes) ? rawNotes : []).filter(n => n && typeof n === 'object').map(n => {
+    let id = (typeof n.id === 'string' && SAFE_ID.test(n.id) && !seen.has(n.id)) ? n.id : uid();
+    seen.add(id);
+    const checklist = (Array.isArray(n.checklist) ? n.checklist : []).filter(i => i && typeof i === 'object').map(i => ({
+      ...(i.separator ? { separator: true } : {}),
+      id: (typeof i.id === 'string' && SAFE_ID.test(i.id)) ? i.id : uid(),
+      text: str(i.text).slice(0, 2000),
+      status: tok(i.status) in STATUSES ? tok(i.status) : (i.done ? 'done' : ''),
+      done: !!i.done,
+      priority: QUADRANTS[i.priority] ? i.priority : null,
+      criticity: CRIT_LABELS[i.criticity] ? i.criticity : '',
+      start_date: date(i.start_date),
+      due_date: date(i.due_date),
+      completedAt: typeof i.completedAt === 'number' ? i.completedAt : null,
+    }));
+    return {
+      id,
+      title: str(n.title).slice(0, 500),
+      type: tok(n.type, 'note'),
+      content: sanitizeHtml(n.content),
+      checklist,
+      tags: (Array.isArray(n.tags) ? n.tags : []).map(t => idMap.get(t)).filter(Boolean),
+      color: (typeof n.color === 'string' && /^#[0-9A-Fa-f]{6}$/.test(n.color)) ? n.color.toUpperCase() : '#FFFFFF',
+      createdAt: typeof n.createdAt === 'number' ? n.createdAt : Date.now(),
+      updatedAt: typeof n.updatedAt === 'number' ? n.updatedAt : Date.now(),
+    };
+  });
+  return { notes: cleanNotes, tags: cleanTags };
+}
 
 // ── IndexedDB ─────────────────────────────────────────
 function openDB() {
@@ -879,7 +962,7 @@ const QUADRANTS = {
   q1: { label:'Urgent & important',      sigil:'!', cls:'q1' },
   q2: { label:'Important & pas urgent',  sigil:'P', cls:'q2' },
   q3: { label:'Urgent & pas important',  sigil:'D', cls:'q3' },
-  q4: { label:'Pas urgent & important',  sigil:'✕', cls:'q4' },
+  q4: { label:'Ni urgent ni important',  sigil:'✕', cls:'q4' },
 };
 const Q_ORDER = ['q1','q2','q3','q4'];
 function nextPriority(p) { const i = Q_ORDER.indexOf(p||'none'); return i < 0 ? 'q1' : (i+1 < Q_ORDER.length ? Q_ORDER[i+1] : 'none'); }
@@ -935,41 +1018,78 @@ const globalFilters = {
   dateTo: '',
 };
 
+// Statistiques de la vue courante, alimentées par chaque vue : { shown, total, unit }
+let filterStats = null;
+const FILTER_TABS = ['notes','tasks','matrix','date'];
+
+// Nombre de filtres communs qui s'appliquent à l'onglet donné
+function activeFilterCount(tab) {
+  let n = globalFilters.tags.size;
+  if(['tasks','matrix','date'].includes(tab)) n += globalFilters.criticities.size;
+  if(tab === 'date') n += (globalFilters.dateFrom ? 1 : 0) + (globalFilters.dateTo ? 1 : 0);
+  return n;
+}
+function resetGlobalFilters() {
+  globalFilters.tags.clear();
+  globalFilters.criticities.clear();
+  globalFilters.dateFrom = '';
+  globalFilters.dateTo = '';
+  render();
+  showToast('Filtres réinitialisés');
+}
+function filterEmptyHtml(icon, msg) {
+  const n = activeFilterCount(currentTab);
+  return `<div class="empty-state filter-empty"><i class="bi ${icon}" style="font-size:32px" aria-hidden="true"></i><p>${msg}</p>${n ? '<button type="button" class="filter-reset" data-freset>Réinitialiser les filtres</button>' : ''}</div>`;
+}
+
 function renderFilterBar() {
   const bar = document.getElementById('global-filter-bar');
   if(!bar) return;
   const tab = currentTab;
-  const showTags = ['tasks','date'].includes(tab);
-  const showCrit = ['tasks','date'].includes(tab);
+  if(!FILTER_TABS.includes(tab)) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
+  const showTags = tags.length > 0;
+  const showCrit = ['tasks','matrix','date'].includes(tab);
   const showDate = tab === 'date';
-
-  if(!showTags && !showCrit && !showDate) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
   bar.style.display = '';
 
   let html = '';
-  if(showTags && tags.length) {
-    html += `<span class="filter-bar-label">Étiquettes</span>`;
+  if(showTags) {
+    html += `<span class="filter-bar-label" id="fbar-tags-lbl">Étiquettes</span>`;
     html += tags.map(t => {
       const st = globalFilters.tags.get(t.id);
       const cls = st === 'include' ? ' active' : st === 'exclude' ? ' exclude' : '';
       const sigil = st === 'include' ? '✓ ' : st === 'exclude' ? '⊘ ' : '';
-      const aria = st === 'include' ? `Inclure l'étiquette ${t.name}` : st === 'exclude' ? `Exclure l'étiquette ${t.name}` : `Filtrer par l'étiquette ${t.name}`;
-      return `<button class="filter-pill${cls}" data-ftag="${t.id}" aria-pressed="${st?'true':'false'}" aria-label="${aria}"><span aria-hidden="true">${sigil}</span>${t.name}</button>`;
+      const aria = st === 'include' ? `Étiquette ${esc(t.name)} : incluse` : st === 'exclude' ? `Étiquette ${esc(t.name)} : exclue` : `Étiquette ${esc(t.name)} : sans filtre`;
+      return `<button type="button" class="filter-pill${cls}" data-ftag="${t.id}" aria-pressed="${st?'true':'false'}" aria-label="${aria}"><span aria-hidden="true">${sigil}</span>${esc(t.name)}</button>`;
     }).join('');
-    if(showCrit) html += `<span class="filter-bar-sep"></span>`;
+    if(showCrit) html += `<span class="filter-bar-sep" aria-hidden="true"></span>`;
   }
   if(showCrit) {
     html += `<span class="filter-bar-label">Criticité</span>`;
-    html += ['critique','elevee','moyenne','faible'].map(c =>
-      `<button class="filter-pill${globalFilters.criticities.has(c)?' active':''}" data-fcrit="${c}">${CRIT_LABELS[c]}</button>`
-    ).join('');
+    html += ['critique','elevee','moyenne','faible'].map(c => {
+      const on = globalFilters.criticities.has(c);
+      return `<button type="button" class="filter-pill${on?' active':''}" data-fcrit="${c}" aria-pressed="${on}"><span aria-hidden="true">${on?'✓ ':''}</span>${CRIT_LABELS[c]}</button>`;
+    }).join('');
   }
   if(showDate) {
-    if(showTags||showCrit) html += `<span class="filter-bar-sep"></span>`;
+    if(showTags||showCrit) html += `<span class="filter-bar-sep" aria-hidden="true"></span>`;
     html += `<span class="filter-bar-label">Du</span>
-      <input class="filter-pill-date" type="date" id="fdate-from" value="${globalFilters.dateFrom}" aria-label="Date de début du filtre">
+      <input class="filter-pill-date" type="date" id="fdate-from" value="${esc(globalFilters.dateFrom)}" aria-label="Date de début du filtre">
       <span class="filter-bar-label">au</span>
-      <input class="filter-pill-date" type="date" id="fdate-to" value="${globalFilters.dateTo}" aria-label="Date de fin du filtre">`;
+      <input class="filter-pill-date" type="date" id="fdate-to" value="${esc(globalFilters.dateTo)}" aria-label="Date de fin du filtre">`;
+  }
+  // Récapitulatif : visible sur tous les onglets pour qu'un filtre posé ailleurs ne passe jamais inaperçu
+  const n = activeFilterCount(tab);
+  if(n) {
+    let hidden = '';
+    if(filterStats && filterStats.total > filterStats.shown) {
+      const h = filterStats.total - filterStats.shown;
+      hidden = ` · ${h} ${filterStats.unit}${h>1?'s':''} masqué${filterStats.unit==='tâche'||filterStats.unit==='note'?'e':''}${h>1?'s':''}`;
+    }
+    html += `<span class="filter-bar-status" role="status"><span><strong>${n} filtre${n>1?'s':''} actif${n>1?'s':''}</strong>${hidden}</span>
+      <button type="button" class="filter-reset" data-freset><i class="bi bi-x-circle" aria-hidden="true"></i>Réinitialiser</button></span>`;
+  } else if(!showTags && !showCrit && !showDate) {
+    bar.innerHTML = ''; bar.style.display = 'none'; return;
   }
   bar.innerHTML = html;
 
@@ -977,6 +1097,7 @@ function renderFilterBar() {
     btn.addEventListener('click', () => {
       cycleTagFilter(globalFilters.tags, btn.dataset.ftag);
       render();
+      document.querySelector(`#global-filter-bar [data-ftag="${btn.dataset.ftag}"]`)?.focus();
     });
   });
   bar.querySelectorAll('[data-fcrit]').forEach(btn => {
@@ -984,6 +1105,7 @@ function renderFilterBar() {
       const c = btn.dataset.fcrit;
       if(globalFilters.criticities.has(c)) globalFilters.criticities.delete(c); else globalFilters.criticities.add(c);
       render();
+      document.querySelector(`#global-filter-bar [data-fcrit="${c}"]`)?.focus();
     });
   });
   const fd = document.getElementById('fdate-from');
@@ -991,6 +1113,8 @@ function renderFilterBar() {
   if(fd) fd.addEventListener('change', () => { globalFilters.dateFrom = fd.value; render(); });
   if(ft) ft.addEventListener('change', () => { globalFilters.dateTo = ft.value; render(); });
 }
+// Boutons « Réinitialiser » (barre et états vides) : délégation globale
+document.addEventListener('click', e => { if(e.target.closest('[data-freset]')) resetGlobalFilters(); });
 
 // Helper : cycle d'état d'une étiquette (neutre → inclure → exclure → neutre)
 function cycleTagFilter(map, tid) {
@@ -1031,7 +1155,7 @@ function taskMatchesDateFilter(t) {
 }
 function critBadge(c) {
   if(!c) return '';
-  return `<span class="badge badge-${CRIT_CSS[c]||'none'}">${CRIT_LABELS[c]||c}</span>`;
+  return `<span class="badge badge-${CRIT_CSS[c]||'none'}">${esc(CRIT_LABELS[c]||c)}</span>`;
 }
 function critClass(c) { return CRIT_CSS[c] || 'none'; }
 
@@ -1073,8 +1197,8 @@ function renderSidebar() {
     o+='<div class="sidebar-task-card" data-nid="'+t.noteId+'">';
     o+='<div class="sidebar-task-crit-row"><span class="sidebar-task-dot" style="background:'+c+'"></span>';
     o+='<span class="sidebar-task-crit-label" style="color:'+c+'">'+l+'</span></div>';
-    o+='<div class="sidebar-task-text">'+(t.text||'')+'</div>';
-    o+='<div class="sidebar-task-note">'+(t.noteTitle||'')+'</div></div>';
+    o+='<div class="sidebar-task-text">'+esc(t.text)+'</div>';
+    o+='<div class="sidebar-task-note">'+esc(t.noteTitle)+'</div></div>';
   });
   panel.innerHTML=o;
   panel.querySelectorAll('.sidebar-task-card[data-nid]').forEach(function(c){
@@ -1083,15 +1207,18 @@ function renderSidebar() {
 }
 
 function render() {
-  renderFilterBar();
   renderSidebar();
-  const el = document.getElementById('content'); if(!el) return;
-  if(currentTab === 'notes')  renderNotes(el);
-  else if(currentTab === 'tasks')  renderTasks(el);
-  else if(currentTab === 'matrix') renderMatrix(el);
-  else if(currentTab === 'date')   renderDate(el);
-  else if(currentTab === 'data')   renderData(el);
-  else if(currentTab === 'help')   renderHelp(el);
+  filterStats = null;
+  const el = document.getElementById('content');
+  if(el) {
+    if(currentTab === 'notes')  renderNotes(el);
+    else if(currentTab === 'tasks')  renderTasks(el);
+    else if(currentTab === 'matrix') renderMatrix(el);
+    else if(currentTab === 'date')   renderDate(el);
+    else if(currentTab === 'data')   renderData(el);
+    else if(currentTab === 'help')   renderHelp(el);
+  }
+  renderFilterBar();
 }
 
 // ── Vue Notes ─────────────────────────────────────────
@@ -1103,38 +1230,22 @@ function renderNotes(el) {
       (n.content||'').toLowerCase().includes(search) ||
       (n.checklist||[]).some(i => i.text && i.text.toLowerCase().includes(search))
     )) return false;
-    if(!matchesTagMap(n.tags, activeTagFilters)) return false;
     if(!noteMatchesGlobalFilters(n)) return false;
     return true;
   });
+  filterStats = { shown: filtered.length, total: notes.length, unit: 'note' };
   el.innerHTML = `
     <div style="margin-bottom:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <input class="input-field" id="search-notes" placeholder="Rechercher…" style="max-width:260px;flex:1" value="${search}" aria-label="Rechercher dans les notes">
-      <div style="display:flex;gap:6px;flex-wrap:wrap" id="tag-filters"></div>
+      <input class="input-field" id="search-notes" placeholder="Rechercher…" style="max-width:260px;flex:1" value="${esc(notesSearchTerm)}" aria-label="Rechercher dans les notes">
     </div>
     <div class="notes-grid" id="notes-grid"></div>`;
-  // Tags filtres
-  const tf = document.getElementById('tag-filters');
-  if(tf && tags.length) {
-    tf.innerHTML = tags.map(t => {
-      const st = activeTagFilters.get(t.id);
-      const cls = st === 'include' ? ' active' : st === 'exclude' ? ' exclude' : '';
-      const sigil = st === 'include' ? '✓ ' : st === 'exclude' ? '⊘ ' : '';
-      const aria = st === 'include' ? `Inclure l'étiquette ${t.name}` : st === 'exclude' ? `Exclure l'étiquette ${t.name}` : `Filtrer par l'étiquette ${t.name}`;
-      return `<button class="tag-toggle${cls}" data-tid="${t.id}" aria-pressed="${st?'true':'false'}" aria-label="${aria}"><span aria-hidden="true">${sigil}</span>${t.name}</button>`;
-    }).join('');
-    tf.querySelectorAll('.tag-toggle').forEach(btn => {
-      btn.addEventListener('click', () => {
-        cycleTagFilter(activeTagFilters, btn.dataset.tid);
-        renderNotes(el);
-      });
-    });
-  }
   // Grille
   const grid = document.getElementById('notes-grid');
   if(!grid) return;
   if(!filtered.length) {
-    grid.innerHTML = `<div class="empty-state"><i class="bi bi-journal" style="font-size:32px"></i><p>Aucune note</p></div>`;
+    grid.innerHTML = notes.length
+      ? filterEmptyHtml('bi-journal', 'Aucune note ne correspond à la recherche ou aux filtres actifs.')
+      : `<div class="empty-state"><i class="bi bi-journal" style="font-size:32px" aria-hidden="true"></i><p>Aucune note</p></div>`;
     return;
   }
   grid.innerHTML = filtered.map(n => {
@@ -1142,17 +1253,17 @@ function renderNotes(el) {
     const txColor = paletteTextColor(n.color);
     const txStyle = txColor ? `color:${txColor}` : '';
     const txStyleMuted = txColor ? `color:${txColor};opacity:.7` : '';
-    const contentText = (n.content||'').replace(/<[^>]+>/g,'').trim();
+    const contentText = htmlToText(n.content);
     const taskItems = (n.checklist||[]).filter(i=>!i.separator);
     const doneCount = taskItems.filter(i=>getStatus(i)==='done').length;
     let preview = contentText.slice(0,120);
     if(!preview && taskItems.length) preview = taskItems.map(i=>i.text).filter(Boolean).slice(0,3).join(' · ');
     const noteTags = (n.tags||[]).map(tid => {
-      const t = tags.find(x=>x.id===tid); return t ? `<span class="tag-chip">${t.name}</span>` : '';
+      const t = tags.find(x=>x.id===tid); return t ? `<span class="tag-chip">${esc(t.name)}</span>` : '';
     }).join('');
-    return `<div class="note-card" style="${bgStyle}" data-nid="${n.id}" tabindex="0" role="button" aria-label="Ouvrir la note : ${n.title||'Sans titre'}">
-      <div class="note-card__title" style="${txStyle}">${n.title||'Sans titre'}</div>
-      <div class="note-card__preview" style="${txStyleMuted}">${preview||'<em>Vide</em>'}</div>
+    return `<div class="note-card" style="${bgStyle}" data-nid="${n.id}" tabindex="0" role="button" aria-label="Ouvrir la note : ${esc(n.title||'Sans titre')}">
+      <div class="note-card__title" style="${txStyle}">${esc(n.title||'Sans titre')}</div>
+      <div class="note-card__preview" style="${txStyleMuted}">${preview?esc(preview):'<em>Vide</em>'}</div>
       ${taskItems.length ? `<div style="${txStyleMuted};font-size:11px;margin-top:4px">${doneCount}/${taskItems.length} tâche${taskItems.length>1?'s':''}</div>` : ''}
       ${noteTags ? `<div class="note-card__tags">${noteTags}</div>` : ''}
     </div>`;
@@ -1187,14 +1298,15 @@ function renderNotes(el) {
 function renderTasks(el) {
   const allTasks = getAllTasks();
   const CRIT_ALL = ['critique','elevee','moyenne','faible'];
-  // Lire filtres depuis state
-  if(!window._taskFilters) window._taskFilters = new Set(CRIT_ALL);
-  const sel = window._taskFilters;
-  const filtered = allTasks.filter(t => (!sel.size || sel.has(t.criticity||'faible')) && taskMatchesGlobalFilters(t));
+  // Filtre de criticité commun (vide = toutes)
+  const selC = globalFilters.criticities;
+  const critShown = c => !selC.size || selC.has(c);
+  const filtered = allTasks.filter(t => taskMatchesGlobalFilters(t));
+  filterStats = { shown: filtered.length, total: allTasks.length, unit: 'tâche' };
 
   // Compteurs par criticité (sur total)
   const byLevel = CRIT_ALL.reduce((a,c) => { a[c] = allTasks.filter(t=>(t.criticity||'faible')===c).length; return a; }, {});
-  const isFiltered = sel.size !== 4;
+  const isFiltered = filtered.length !== allTasks.length;
   const badgeText = isFiltered ? `Tâches (${filtered.length} filtrée${filtered.length>1?'s':''})` : `Tâches (${allTasks.length})`;
 
   // Météo
@@ -1234,8 +1346,8 @@ function renderTasks(el) {
         <div class="sidebar-box">
           <div class="sidebar-heading">Criticité</div>
           ${CRIT_ALL.map(c => `
-            <label class="filter-item${sel.has(c)?'':' off'}" id="fi-${c}">
-              <input type="checkbox" ${sel.has(c)?'checked':''} data-crit="${c}" class="crit-filter-cb" aria-label="Filtrer ${CRIT_LABELS[c]}">
+            <label class="filter-item${critShown(c)?'':' off'}" id="fi-${c}">
+              <input type="checkbox" ${critShown(c)?'checked':''} data-crit="${c}" class="crit-filter-cb" aria-label="Afficher la criticité ${CRIT_LABELS[c]}">
               <span class="badge badge-${CRIT_CSS[c]}">${CRIT_LABELS[c]}</span>
               <span class="filter-count">${byLevel[c]}</span>
             </label>`).join('')}
@@ -1264,7 +1376,7 @@ function renderTasks(el) {
         ${gTasks.map(t => taskItemHtml(t)).join('')}
       </div>`;
     }).join('');
-    listEl.innerHTML = groupsHtml || '<div class="empty-state"><p>Aucune tâche ne correspond aux filtres.</p></div>';
+    listEl.innerHTML = groupsHtml || filterEmptyHtml('bi-check2-square', 'Aucune tâche ne correspond aux filtres actifs.');
     listEl.querySelectorAll('.task-check').forEach(btn => {
       btn.addEventListener('click', () => toggleTask(btn.dataset.nid, btn.dataset.iid));
     });
@@ -1275,8 +1387,15 @@ function renderTasks(el) {
   // Filtres
   el.querySelectorAll('.crit-filter-cb').forEach(cb => {
     cb.addEventListener('change', () => {
-      if(cb.checked) sel.add(cb.dataset.crit); else sel.delete(cb.dataset.crit);
-      renderTasks(el);
+      const c = cb.dataset.crit;
+      // Les cases expriment « afficher » ; le filtre commun exprime « restreindre à »
+      const shown = new Set(selC.size ? selC : CRIT_ALL);
+      if(cb.checked) shown.add(c); else shown.delete(c);
+      if(!shown.size) { cb.checked = true; showToast('Au moins une criticité doit rester affichée'); return; }
+      selC.clear();
+      if(shown.size < CRIT_ALL.length) shown.forEach(x => selC.add(x));
+      render();
+      document.querySelector(`.crit-filter-cb[data-crit="${c}"]`)?.focus();
     });
   });
 }
@@ -1284,11 +1403,11 @@ function renderTasks(el) {
 function taskItemHtml(t) {
   const st = getStatus(t), cfg = STATUSES[st]||STATUSES[''];
   const prio = t.priority||'none', pcfg = QUADRANTS[prio]||null;
-  const noteTitle = t.noteTitle ? `<span class="task-item__meta">${t.noteTitle}</span>` : '';
+  const noteTitle = t.noteTitle ? `<span class="task-item__meta">${esc(t.noteTitle)}</span>` : '';
   return `<div class="task-item">
     <button class="task-check ${cfg.cls}" data-nid="${t.noteId}" data-iid="${t.id}" title="${cfg.label}" aria-label="${cfg.label}">${cfg.sigil||''}</button>
     ${critBadge(t.criticity||'')}
-    <span class="task-item__title${st==='done'?' done':''}">${t.text}</span>
+    <span class="task-item__title${st==='done'?' done':''}">${esc(t.text)}</span>
     ${noteTitle}
     <button class="prio-badge ${pcfg?pcfg.cls:'none'}" data-nid="${t.noteId}" data-iid="${t.id}" title="${pcfg?pcfg.label:'Sans priorité'}" aria-label="${pcfg?pcfg.label:'Sans priorité'}">${pcfg?pcfg.sigil:'·'}</button>
   </div>`;
@@ -1316,11 +1435,11 @@ function openPurge() {
         ${candidates.map(n => {
           const noteTags = (n.tags||[]).map(tid=>tags.find(t=>t.id===tid)?.name||'').filter(Boolean).join(', ');
           return `<div class="purge-item">
-            <input type="checkbox" checked data-nid="${n.id}" class="purge-cb" aria-label="Sélectionner ${n.title||'Sans titre'}">
+            <input type="checkbox" checked data-nid="${n.id}" class="purge-cb" aria-label="Sélectionner ${esc(n.title||'Sans titre')}">
             <div style="flex:1;min-width:0">
               <div style="display:flex;align-items:center;gap:8px">
-                <span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${n.title||'Sans titre'}</span>
-                <button class="purge-open-btn" data-nid="${n.id}" title="Voir la note" aria-label="Voir la note ${n.title||'Sans titre'}" style="color:var(--red);font-size:12px;white-space:nowrap;flex-shrink:0;padding:1px 6px;border-radius:var(--radius-sm);border:1px solid var(--border)"><i class="bi bi-box-arrow-up-right"></i> Voir</button>
+                <span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${esc(n.title||'Sans titre')}</span>
+                <button class="purge-open-btn" data-nid="${n.id}" title="Voir la note" aria-label="Voir la note ${esc(n.title||'Sans titre')}" style="color:var(--red);font-size:12px;white-space:nowrap;flex-shrink:0;padding:1px 6px;border-radius:var(--radius-sm);border:1px solid var(--border)"><i class="bi bi-box-arrow-up-right"></i> Voir</button>
               </div>
               ${noteTags ? `<div style="font-size:11px;color:var(--text3)">${noteTags}</div>` : ''}
             </div>
@@ -1354,7 +1473,6 @@ function openPurge() {
   on('purge-cancel','click',  () => modal.classList.remove('open'));
   on('purge-close','click',   () => modal.classList.remove('open'));
 }
-const matrixExtraFilters = { tags: new Set(), crits: new Set() };
 
 function renderMatrix(el) {
   const allTasks = getAllTasks().filter(t => getStatus(t) !== 'done');
@@ -1370,18 +1488,6 @@ function renderMatrix(el) {
             aria-pressed="${active}">${qcfg.sigil} ${qcfg.label}</button>`;
         }).join('')}
       </div>
-      <div class="matrix-filter-row">
-        <span class="filter-bar-label">Criticité</span>
-        ${['critique','elevee','moyenne','faible'].map(c=>
-          `<button class="filter-pill${matrixExtraFilters.crits.has(c)?' active':''}" data-mfcrit="${c}">${CRIT_LABELS[c]}</button>`
-        ).join('')}
-      </div>
-      ${tags.length ? `<div class="matrix-filter-row">
-        <span class="filter-bar-label">Étiquettes</span>
-        <div style="display:flex;flex-wrap:wrap;gap:5px">
-          ${tags.map(t=>`<button class="filter-pill${matrixExtraFilters.tags.has(t.id)?' active':''}" data-mftag="${t.id}">${t.name}</button>`).join('')}
-        </div>
-      </div>` : ''}
     </div>
     <div class="matrix-grid" id="matrix-quadrants"></div>`;
 
@@ -1392,32 +1498,12 @@ function renderMatrix(el) {
       renderMatrix(el);
     });
   });
-  el.querySelectorAll('[data-mftag]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tid = btn.dataset.mftag;
-      if(matrixExtraFilters.tags.has(tid)) matrixExtraFilters.tags.delete(tid); else matrixExtraFilters.tags.add(tid);
-      renderMatrix(el);
-    });
-  });
-  el.querySelectorAll('[data-mfcrit]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const c = btn.dataset.mfcrit;
-      if(matrixExtraFilters.crits.has(c)) matrixExtraFilters.crits.delete(c); else matrixExtraFilters.crits.add(c);
-      renderMatrix(el);
-    });
-  });
 
   const grid = document.getElementById('matrix-quadrants');
   if(!grid) return;
 
-  const visibleTasks = allTasks.filter(t => {
-    if(matrixExtraFilters.tags.size) {
-      const noteTags = notes.find(n=>n.id===t.noteId)?.tags||[];
-      if(!noteTags.some(tid=>matrixExtraFilters.tags.has(tid))) return false;
-    }
-    if(matrixExtraFilters.crits.size && !matrixExtraFilters.crits.has(t.criticity||'faible')) return false;
-    return true;
-  });
+  const visibleTasks = allTasks.filter(t => taskMatchesGlobalFilters(t));
+  filterStats = { shown: visibleTasks.length, total: allTasks.length, unit: 'tâche' };
 
   grid.innerHTML = Q_ORDER.filter(q => matrixFilter.has(q)).map(q => {
     const qcfg = QUADRANTS[q];
@@ -1441,15 +1527,15 @@ function matrixCardHtml(t) {
   const st = getStatus(t), cfg = STATUSES[st]||STATUSES[''];
   const tagLabel = t.tagLabel ? `[${t.tagLabel}] ` : '';
   return `<div class="matrix-card">
-    <div class="task-context" data-nid="${t.noteId}" role="button" tabindex="0" aria-label="Aller à la note : ${t.noteTitle}">
-      ${t.tagLabel ? `<span class="task-context__tag">[${t.tagLabel}]</span>` : ''}
-      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${t.noteTitle}</span>
+    <div class="task-context" data-nid="${t.noteId}" role="button" tabindex="0" aria-label="Aller à la note : ${esc(t.noteTitle)}">
+      ${t.tagLabel ? `<span class="task-context__tag">[${esc(t.tagLabel)}]</span>` : ''}
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${esc(t.noteTitle)}</span>
       <svg class="task-context__arrow" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M1 5h8M5 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
       <button class="task-check ${cfg.cls}" data-nid="${t.noteId}" data-iid="${t.id}" title="${cfg.label}" aria-label="${cfg.label}" style="width:18px;height:18px;font-size:10px">${cfg.sigil||''}</button>
       ${critBadge(t.criticity||'')}
-      <span style="font-size:13px;color:var(--text1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.text}</span>
+      <span style="font-size:13px;color:var(--text1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.text)}</span>
     </div>
   </div>`;
 }
@@ -1474,7 +1560,9 @@ function renderDate(el) {
 }
 
 function renderDateList(el) {
-  const allTasks = getAllTasks().filter(t => getStatus(t) !== 'done' && taskMatchesGlobalFilters(t));
+  const base = getAllTasks().filter(t => getStatus(t) !== 'done');
+  const allTasks = base.filter(t => taskMatchesGlobalFilters(t) && taskMatchesDateFilter(t));
+  filterStats = { shown: allTasks.length, total: base.length, unit: 'tâche' };
   const todayStr = today();
   const now = new Date(); now.setHours(0,0,0,0);
   const tomorrow = new Date(now); tomorrow.setDate(now.getDate()+1);
@@ -1539,10 +1627,10 @@ function dateTaskHtml(t) {
   return `<div class="date-task-item">
     <button class="task-check ${cfg.cls}" data-nid="${t.noteId}" data-iid="${t.id}" title="${cfg.label}" aria-label="${cfg.label}" style="width:18px;height:18px;font-size:10px">${cfg.sigil||''}</button>
     <div class="date-task-item__body">
-      <div class="date-task-item__title">${t.text}</div>
+      <div class="date-task-item__title">${esc(t.text)}</div>
       <div class="date-task-item__sub">
         ${critBadge(t.criticity||'')}
-        ${t.noteTitle ? `<span style="color:var(--text3)">${t.noteTitle}</span>` : ''}
+        ${t.noteTitle ? `<span style="color:var(--text3)">${esc(t.noteTitle)}</span>` : ''}
         ${t.due_date ? `<span>${formatDate(t.due_date)}</span>` : ''}
         ${daysHtml}
       </div>
@@ -1554,9 +1642,13 @@ function dateTaskHtml(t) {
 let ganttZoom = 1; // 1=mois, 2=semaine, 0.5=trimestre
 
 function renderGantt(el) {
-  const allTasks = getAllTasks().filter(t => (t.start_date || t.due_date) && taskMatchesGlobalFilters(t));
+  const base = getAllTasks().filter(t => (t.start_date || t.due_date));
+  const allTasks = base.filter(t => taskMatchesGlobalFilters(t) && taskMatchesDateFilter(t));
+  filterStats = { shown: allTasks.length, total: base.length, unit: 'tâche' };
   if(!allTasks.length) {
-    el.innerHTML = `<div class="empty-state"><i class="bi bi-bar-chart-steps" style="font-size:32px"></i><p>Aucune tâche avec des dates de début ou d'échéance</p></div>`;
+    el.innerHTML = base.length
+      ? filterEmptyHtml('bi-bar-chart-steps', 'Aucune tâche datée ne correspond aux filtres actifs.')
+      : `<div class="empty-state"><i class="bi bi-bar-chart-steps" style="font-size:32px" aria-hidden="true"></i><p>Aucune tâche avec des dates de début ou d'échéance</p></div>`;
     return;
   }
 
@@ -1607,15 +1699,15 @@ function renderGantt(el) {
     const cc = {critique:'crit',elevee:'elev',moyenne:'moye',faible:'faib'}[t.criticity||'faible']||'faib';
     const durDays = Math.round((e - s) / 86400000) + 1;
     return `<div class="gantt-row">
-      <div class="gantt-row-label" title="${t.text}">${t.text}</div>
+      <div class="gantt-row-label" title="${esc(t.text)}">${esc(t.text)}</div>
       <div class="gantt-row-track">
         ${todayPct ? `<div class="gantt-today-line" style="left:${todayPct}"></div>` : ''}
         <div class="gantt-bar ${cc}"
           style="left:${leftPct.toFixed(2)}%;width:${Math.min(widthPct,(100-leftPct)).toFixed(2)}%"
           data-gantt-nid="${t.noteId}" data-gantt-iid="${t.id}"
-          data-tooltip="${t.text} — ${formatDate(t.start_date)||'?'} → ${formatDate(t.due_date)||'?'} (${durDays} j)"
-          tabindex="0" role="button" aria-label="${t.text}">
-          <span>${t.text}</span>
+          data-tooltip="${esc(t.text)} — ${formatDate(t.start_date)||'?'} → ${formatDate(t.due_date)||'?'} (${durDays} j)"
+          tabindex="0" role="button" aria-label="${esc(t.text)}">
+          <span>${esc(t.text)}</span>
         </div>
       </div>
     </div>`;
@@ -1770,6 +1862,16 @@ function renderData(el) {
 
   el.innerHTML = `
     <div class="data-section">
+      <h3>Sauvegarde et rapport</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <button class="btn btn-primary" id="btn-export-enc"><i class="bi bi-lock" aria-hidden="true"></i> Exporter chiffré</button>
+        <button class="btn btn-secondary" id="btn-export">Exporter JSON (non chiffré)</button>
+        <button class="btn btn-secondary" id="btn-import"><i class="bi bi-upload" aria-hidden="true"></i> Importer</button>
+        <button class="btn btn-secondary" id="btn-report"><i class="bi bi-file-text" aria-hidden="true"></i> Rapport Markdown</button>
+        <input type="file" id="import-input" accept=".json,.enc.json" style="display:none" aria-label="Sélectionner un fichier JSON">
+      </div>
+    </div>
+    <div class="data-section">
       <h3>Statistiques</h3>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px">
         ${[['Notes',totalNotes,'bi-journal'],['Tâches',totalTasks,'bi-check2-square'],['Terminées',doneTasks,'bi-check2-all'],['Étiquettes',tags.length,'bi-tag']].map(([l,v,ic])=>`
@@ -1795,7 +1897,7 @@ function renderData(el) {
           <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:8px">Notes par étiquette</div>
           ${byTag.length ? byTag.map(({t,count})=>`
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
-              <span class="tag-chip" style="min-width:60px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</span>
+              <span class="tag-chip" style="min-width:60px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.name)}</span>
               <div style="flex:1;height:6px;background:var(--surface3);border-radius:3px">
                 <div style="width:${totalNotes?Math.round(count/totalNotes*100):0}%;height:100%;border-radius:3px;background:var(--text3)"></div>
               </div>
@@ -1810,25 +1912,16 @@ function renderData(el) {
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px" id="tag-list"></div>
       <div style="display:flex;gap:8px">
         <input class="input-field" id="new-tag-input" placeholder="Nouvelle étiquette…" style="max-width:200px" aria-label="Nom de la nouvelle étiquette">
-        <button class="btn btn-primary" id="btn-add-tag">Ajouter</button>
+        <button class="btn btn-secondary" id="btn-add-tag">Ajouter</button>
       </div>
     </div>
-    <div class="data-section">
-      <h3>Export / Import</h3>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">
-        <button class="btn btn-primary" id="btn-export">Exporter JSON</button>
-        <button class="btn btn-secondary" id="btn-export-enc"><i class="bi bi-lock"></i> Exporter chiffré</button>
-        <button class="btn btn-secondary" id="btn-import">Importer JSON</button>
-        <button class="btn btn-secondary" id="btn-report"><i class="bi bi-file-text"></i> Rapport Markdown</button>
-        <input type="file" id="import-input" accept=".json,.enc.json" style="display:none" aria-label="Sélectionner un fichier JSON">
-      </div>
-    </div>`;
+`;
 
   const tagList = document.getElementById('tag-list');
   if(tagList) {
     tagList.innerHTML = tags.map(t=>`<span style="display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:4px 10px;font-size:12px">
-      ${t.name}
-      <button data-tid="${t.id}" class="tag-del-btn" style="color:var(--text3);font-size:14px;line-height:1" aria-label="Supprimer l'étiquette ${t.name}">×</button>
+      ${esc(t.name)}
+      <button data-tid="${t.id}" class="tag-del-btn" style="color:var(--text3);font-size:14px;line-height:1" aria-label="Supprimer l'étiquette ${esc(t.name)}">×</button>
     </span>`).join('') || '<span style="font-size:13px;color:var(--text3)">Aucune étiquette</span>';
     tagList.querySelectorAll('.tag-del-btn').forEach(b => {
       b.addEventListener('click', () => deleteTag(b.dataset.tid));
@@ -1895,8 +1988,8 @@ function openNote(nid) {
 
   const tagOptions = tags.map(t =>
     `<label style="display:flex;align-items:center;gap:6px;font-size:13px">
-      <input type="checkbox" ${(note.tags||[]).includes(t.id)?'checked':''} data-tid="${t.id}" class="tag-cb" aria-label="${t.name}">
-      ${t.name}
+      <input type="checkbox" ${(note.tags||[]).includes(t.id)?'checked':''} data-tid="${t.id}" class="tag-cb" aria-label="${esc(t.name)}">
+      ${esc(t.name)}
     </label>`).join('');
 
   const currentPalette = colorToPalette(note.color);
@@ -1907,7 +2000,7 @@ function openNote(nid) {
   ).join('');
 
   body.innerHTML = `
-    <input class="input-field" id="note-title-input" value="${(note.title||'').replace(/"/g,'&quot;')}" placeholder="Titre (optionnel)" style="margin-bottom:12px" aria-label="Titre de la note">
+    <input class="input-field" id="note-title-input" value="${esc(note.title)}" placeholder="Titre (optionnel)" style="margin-bottom:12px" aria-label="Titre de la note">
     <div id="editor-area"></div>
     <div style="margin:12px 0">
       <div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:6px">Couleur</div>
@@ -1952,7 +2045,7 @@ function renderEditorArea(note) {
         <button class="toolbar-btn" data-cmd="insertOrderedList" title="Liste numérotée" aria-label="Liste numérotée">1.</button>
         ${voiceAvail ? '<button class="toolbar-btn" id="btn-voice-note" title="Saisie vocale" aria-label="Saisie vocale" aria-pressed="false"><i class="bi bi-mic"></i></button>' : ''}
       </div>
-      <div class="editor-content" id="note-content" contenteditable="true" data-placeholder="Contenu de la note…" aria-multiline="true" aria-label="Contenu de la note">${note.content||''}</div>
+      <div class="editor-content" id="note-content" contenteditable="true" data-placeholder="Contenu de la note…" aria-multiline="true" aria-label="Contenu de la note">${sanitizeHtml(note.content)}</div>
     </div>
     <div style="border-top:1px solid var(--border);margin:16px 0 8px"></div>
     <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">Tâches</div>
@@ -2061,7 +2154,7 @@ function checklistItemHtml(item) {
   return `<div class="checklist-item" data-iid="${item.id}">
     <input type="checkbox" class="item-select-cb" data-iid="${item.id}" aria-label="Sélectionner cette tâche">
     <button class="task-check ${cfg.cls}" data-iid="${item.id}" title="${cfg.label}" aria-label="${cfg.label}">${cfg.sigil||''}</button>
-    <span class="checklist-text${st==='done'?' done':''}">${item.text}</span>
+    <span class="checklist-text${st==='done'?' done':''}">${esc(item.text)}</span>
     <select class="crit-select" data-iid="${item.id}" title="Criticité" aria-label="Criticité de la tâche" style="flex-shrink:0">
       <option value="" disabled${!critVal?' selected':''}>Criticité…</option>
       <option value=""${critVal===''?' selected':''}>—</option>
@@ -2262,11 +2355,14 @@ async function deleteTag(tid) {
 }
 
 // ── Chiffrement AES-256-GCM ───────────────────────────
-async function deriveKey(password, salt) {
+const PBKDF2_ITERATIONS = 600000;      // recommandation OWASP 2023 pour PBKDF2-SHA256
+const PBKDF2_LEGACY_ITERATIONS = 100000; // exports antérieurs à la v3.7.0
+const PWD_MIN_LENGTH = 12;
+async function deriveKey(password, salt, iterations = PBKDF2_ITERATIONS) {
   const enc = new TextEncoder();
   const keyMat = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey(
-    { name:'PBKDF2', salt, hash:'SHA-256', iterations:100000 },
+    { name:'PBKDF2', salt, hash:'SHA-256', iterations },
     keyMat, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
   );
 }
@@ -2278,27 +2374,39 @@ async function encryptData(plaintext, password) {
   const ct   = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, enc.encode(plaintext));
   const toB64 = arr => { let s = ''; arr.forEach(b => s += String.fromCharCode(b)); return btoa(s); };
   return JSON.stringify({
+    v: 2,
+    kdf: 'PBKDF2-SHA256',
+    iter: PBKDF2_ITERATIONS,
     enc: toB64(new Uint8Array(ct)),
     salt: toB64(salt),
     iv:   toB64(iv)
   });
 }
 async function decryptData(payload, password) {
-  const { enc, salt, iv } = JSON.parse(payload);
+  const { enc, salt, iv, iter } = JSON.parse(payload);
   const toBytes = b => new Uint8Array(atob(b).split('').map(c=>c.charCodeAt(0)));
-  const key = await deriveKey(password, toBytes(salt));
+  const iterations = Number.isInteger(iter) && iter >= PBKDF2_LEGACY_ITERATIONS && iter <= 10000000 ? iter : PBKDF2_LEGACY_ITERATIONS;
+  const key = await deriveKey(password, toBytes(salt), iterations);
   const pt  = await crypto.subtle.decrypt({ name:'AES-GCM', iv: toBytes(iv) }, key, toBytes(enc));
   return new TextDecoder().decode(pt);
 }
 
 // ── Modale mot de passe ───────────────────────────────
-function promptPassword() {
+// mode 'export' : double saisie et longueur minimale ; mode 'import' : saisie unique masquée
+function promptPassword(mode = 'export') {
   return new Promise(resolve => {
     const overlay  = document.getElementById('modal-pwd');
     const input    = document.getElementById('pwd-input');
     const confirm  = document.getElementById('pwd-confirm');
     const errorEl  = document.getElementById('pwd-error');
+    const isImport = mode === 'import';
+    const opener   = document.activeElement;
 
+    document.getElementById('modal-pwd-title-text').textContent = isImport ? 'Déchiffrer l\'import' : 'Exporter chiffré';
+    document.getElementById('pwd-ok-text').textContent = isImport ? 'Déchiffrer' : 'Exporter';
+    document.getElementById('pwd-confirm-block').style.display = isImport ? 'none' : '';
+    document.getElementById('pwd-hint').style.display = isImport ? 'none' : '';
+    input.setAttribute('autocomplete', isImport ? 'current-password' : 'new-password');
     input.value = ''; confirm.value = ''; errorEl.textContent = '';
     input.type = 'password'; confirm.type = 'password';
     document.querySelector('#pwd-toggle i').className = 'bi bi-eye';
@@ -2306,12 +2414,23 @@ function promptPassword() {
     overlay.classList.add('open');
     setTimeout(() => input.focus(), 50);
 
-    function close(val) { overlay.classList.remove('open'); resolve(val); }
+    function close(val) {
+      overlay.classList.remove('open');
+      input.value = ''; confirm.value = '';   // ne pas laisser le mot de passe dans le DOM
+      overlay.removeEventListener('keydown', onEsc);
+      if(opener && opener.focus) opener.focus();
+      resolve(val);
+    }
+    function onEsc(e) { if(e.key === 'Escape') close(null); }
+    overlay.addEventListener('keydown', onEsc);
 
     function trySubmit() {
       const pwd = input.value;
-      if(!pwd) { errorEl.textContent = 'Le mot de passe est requis.'; return; }
-      if(pwd !== confirm.value) { errorEl.textContent = 'Les mots de passe ne correspondent pas.'; return; }
+      if(!pwd) { errorEl.textContent = 'Le mot de passe est requis.'; input.focus(); return; }
+      if(!isImport) {
+        if(pwd.length < PWD_MIN_LENGTH) { errorEl.textContent = `Le mot de passe doit contenir au moins ${PWD_MIN_LENGTH} caractères.`; input.focus(); return; }
+        if(pwd !== confirm.value) { errorEl.textContent = 'Les mots de passe ne correspondent pas.'; confirm.focus(); return; }
+      }
       close(pwd);
     }
 
@@ -2326,7 +2445,7 @@ function promptPassword() {
     document.getElementById('pwd-close').onclick     = () => close(null);
     document.getElementById('pwd-toggle').onclick    = () => toggleVis(input,   document.getElementById('pwd-toggle'));
     document.getElementById('pwd-confirm-toggle').onclick = () => toggleVis(confirm, document.getElementById('pwd-confirm-toggle'));
-    input.onkeydown   = e => { if(e.key === 'Enter') { confirm.focus(); } };
+    input.onkeydown   = e => { if(e.key === 'Enter') { if(isImport) trySubmit(); else confirm.focus(); } };
     confirm.onkeydown = e => { if(e.key === 'Enter') trySubmit(); };
   });
 }
@@ -2365,19 +2484,20 @@ async function importJSON(e) {
     let data;
     const isEncrypted = file.name.endsWith('.enc.json');
     if(isEncrypted) {
-      const pwd = prompt('Mot de passe pour déchiffrer ce fichier :');
-      if(!pwd) return;
+      const pwd = await promptPassword('import');
+      if(!pwd) { e.target.value = ''; return; }
       try { data = JSON.parse(await decryptData(text, pwd)); }
-      catch(e) { showToast('Mot de passe incorrect ou fichier corrompu'); return; }
+      catch(err) { showToast('Mot de passe incorrect ou fichier corrompu'); e.target.value = ''; return; }
     } else {
       data = JSON.parse(text);
     }
-    if(!data.notes || !Array.isArray(data.notes)) throw new Error('Format invalide');
-    const nCount = data.notes.length, tCount = (data.tags||[]).length;
-    if(!confirm(`Importer ${nCount} note${nCount>1?'s':''} et ${tCount} étiquette${tCount>1?'s':''} ?\n\nAttention : les données actuelles seront remplacées.`)) return;
+    if(!data || !Array.isArray(data.notes)) throw new Error('Format invalide');
+    const clean = sanitizeData(data.notes, data.tags);
+    const nCount = clean.notes.length, tCount = clean.tags.length;
+    if(!confirm(`Importer ${nCount} note${nCount>1?'s':''} et ${tCount} étiquette${tCount>1?'s':''} ?\n\nAttention : les données actuelles seront remplacées.`)) { e.target.value = ''; return; }
     for(const n of notes) await dbDelete('notes', n.id);
     for(const t of tags) await dbDelete('tags', t.id);
-    notes = data.notes; tags = data.tags||[];
+    notes = clean.notes; tags = clean.tags;
     for(const n of notes) await dbPut('notes', n);
     for(const t of tags) await dbPut('tags', t);
     scheduleAutoExport();
@@ -2461,7 +2581,7 @@ function openReport() {
 
   const tagCheckboxes = tags.map(t =>
     `<label style="display:flex;align-items:center;gap:5px;font-size:12px">
-      <input type="checkbox" class="rep-tag-cb" data-tid="${t.id}" aria-label="${t.name}"> ${t.name}
+      <input type="checkbox" class="rep-tag-cb" data-tid="${t.id}" aria-label="${esc(t.name)}"> ${esc(t.name)}
     </label>`).join('');
   const critCheckboxes = ['critique','elevee','moyenne','faible'].map(c =>
     `<label style="display:flex;align-items:center;gap:5px;font-size:12px">
@@ -2576,6 +2696,15 @@ function applyTheme() {
 
 // ── Changelog ─────────────────────────────────────────
 const CHANGELOG = [
+  { version:'3.7.0', date:'2026-09-29', tag:'minor', entries:[
+    { icon:'🔎', text:'Filtres communs à tous les onglets (notes, tâches, matrices, dates) : une seule barre, un récapitulatif des filtres actifs et du nombre d\'éléments masqués, un bouton de réinitialisation.' },
+    { icon:'🐛', text:'Le filtre de période de l\'onglet Dates est désormais appliqué.' },
+    { icon:'🔒', text:'Import chiffré : le mot de passe se saisit dans un champ masqué au lieu d\'une fenêtre système.' },
+    { icon:'🔒', text:'Sécurité : échappement des données affichées, assainissement du contenu des notes et des fichiers importés, politique de sécurité du contenu (CSP), empreinte d\'intégrité sur la feuille d\'icônes.' },
+    { icon:'🔒', text:'Export chiffré : 600 000 itérations PBKDF2 et 12 caractères minimum. Les anciens exports restent lisibles.' },
+    { icon:'✨', text:'Onglet Données : les boutons de sauvegarde, d\'import et de rapport sont en haut de page.' },
+    { icon:'🔧', text:'Libellé du quadrant 4 corrigé : « Ni urgent ni important ».' },
+  ]},
   { version:'3.6.0', date:'2026-06-27', tag:'minor', entries:[
     { icon:'🎨', text:'Design System CDC Habitat — palette de marque (rouge #E30613) par defaut, clair et sombre.' },
     { icon:'🎨', text:'Six palettes au choix dans la sidebar : CDC Habitat, Nuit Editoriale, Graphite/Data, Studio Papier, Foret/Menthe, Or/Nuit. Chacune en mode clair et sombre.' },
@@ -2702,10 +2831,11 @@ async function init() {
   applyPalette();
   try { db = await openDB(); } catch(e) {
     const backup = localStorage.getItem('notes-backup');
-    if(backup) { try { const d=JSON.parse(backup); notes=d.notes||[]; tags=d.tags||[]; } catch(e2) {} }
+    if(backup) { try { const d=JSON.parse(backup); ({notes, tags} = sanitizeData(d.notes, d.tags)); } catch(e2) {} }
     render(); setSyncStatus('saved'); return;
   }
-  [notes, tags] = await Promise.all([dbGetAll('notes'), dbGetAll('tags')]);
+  const [rawNotes, rawTags] = await Promise.all([dbGetAll('notes'), dbGetAll('tags')]);
+  ({notes, tags} = sanitizeData(rawNotes, rawTags));
   render(); setSyncStatus('saved');
   setTimeout(checkForUpdate, 2000);
 }
